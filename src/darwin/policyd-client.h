@@ -1,9 +1,9 @@
-#ifndef	_frida_policyd_user_
-#define	_frida_policyd_user_
+#ifndef	_telco_policyd_user_
+#define	_telco_policyd_user_
 
-/* Module frida_policyd */
+/* Module telco_policyd */
 
-#include "frida-tvos.h"
+#include "telco-tvos.h"
 
 #include <string.h>
 #include <mach/ndr.h>
@@ -75,9 +75,9 @@ typedef function_table_entry   *function_table_t;
 #endif /* FUNCTION_PTR_T */
 #endif /* AUTOTEST */
 
-#ifndef	frida_policyd_MSG_COUNT
-#define	frida_policyd_MSG_COUNT	1
-#endif	/* frida_policyd_MSG_COUNT */
+#ifndef	telco_policyd_MSG_COUNT
+#define	telco_policyd_MSG_COUNT	1
+#endif	/* telco_policyd_MSG_COUNT */
 
 #include <mach/std_types.h>
 #include <mach/mig.h>
@@ -92,13 +92,13 @@ __BeforeMigUserHeader
 __BEGIN_DECLS
 
 
-/* Routine frida_policyd_soften */
+/* Routine telco_policyd_soften */
 #ifdef	mig_external
 mig_external
 #else
 extern
 #endif	/* mig_external */
-kern_return_t frida_policyd_soften
+kern_return_t telco_policyd_soften
 (
 	mach_port_t server,
 	int pid,
@@ -120,8 +120,8 @@ __END_DECLS
 
 /* typedefs for all requests */
 
-#ifndef __Request__frida_policyd_subsystem__defined
-#define __Request__frida_policyd_subsystem__defined
+#ifndef __Request__telco_policyd_subsystem__defined
+#define __Request__telco_policyd_subsystem__defined
 
 #ifdef  __MigPackStructs
 #pragma pack(push, 4)
@@ -130,24 +130,24 @@ __END_DECLS
 		mach_msg_header_t Head;
 		NDR_record_t NDR;
 		int pid;
-	} __Request__frida_policyd_soften_t __attribute__((unused));
+	} __Request__telco_policyd_soften_t __attribute__((unused));
 #ifdef  __MigPackStructs
 #pragma pack(pop)
 #endif
-#endif /* !__Request__frida_policyd_subsystem__defined */
+#endif /* !__Request__telco_policyd_subsystem__defined */
 
 /* union of all requests */
 
-#ifndef __RequestUnion__frida_policyd_subsystem__defined
-#define __RequestUnion__frida_policyd_subsystem__defined
-union __RequestUnion__frida_policyd_subsystem {
-	__Request__frida_policyd_soften_t Request_frida_policyd_soften;
+#ifndef __RequestUnion__telco_policyd_subsystem__defined
+#define __RequestUnion__telco_policyd_subsystem__defined
+union __RequestUnion__telco_policyd_subsystem {
+	__Request__telco_policyd_soften_t Request_telco_policyd_soften;
 };
-#endif /* !__RequestUnion__frida_policyd_subsystem__defined */
+#endif /* !__RequestUnion__telco_policyd_subsystem__defined */
 /* typedefs for all replies */
 
-#ifndef __Reply__frida_policyd_subsystem__defined
-#define __Reply__frida_policyd_subsystem__defined
+#ifndef __Reply__telco_policyd_subsystem__defined
+#define __Reply__telco_policyd_subsystem__defined
 
 #ifdef  __MigPackStructs
 #pragma pack(push, 4)
@@ -157,28 +157,28 @@ union __RequestUnion__frida_policyd_subsystem {
 		NDR_record_t NDR;
 		kern_return_t RetCode;
 		int error_code;
-	} __Reply__frida_policyd_soften_t __attribute__((unused));
+	} __Reply__telco_policyd_soften_t __attribute__((unused));
 #ifdef  __MigPackStructs
 #pragma pack(pop)
 #endif
-#endif /* !__Reply__frida_policyd_subsystem__defined */
+#endif /* !__Reply__telco_policyd_subsystem__defined */
 
 /* union of all replies */
 
-#ifndef __ReplyUnion__frida_policyd_subsystem__defined
-#define __ReplyUnion__frida_policyd_subsystem__defined
-union __ReplyUnion__frida_policyd_subsystem {
-	__Reply__frida_policyd_soften_t Reply_frida_policyd_soften;
+#ifndef __ReplyUnion__telco_policyd_subsystem__defined
+#define __ReplyUnion__telco_policyd_subsystem__defined
+union __ReplyUnion__telco_policyd_subsystem {
+	__Reply__telco_policyd_soften_t Reply_telco_policyd_soften;
 };
-#endif /* !__RequestUnion__frida_policyd_subsystem__defined */
+#endif /* !__RequestUnion__telco_policyd_subsystem__defined */
 
-#ifndef subsystem_to_name_map_frida_policyd
-#define subsystem_to_name_map_frida_policyd \
-    { "frida_policyd_soften", 31337 }
+#ifndef subsystem_to_name_map_telco_policyd
+#define subsystem_to_name_map_telco_policyd \
+    { "telco_policyd_soften", 31337 }
 #endif
 
 #ifdef __AfterMigUserHeader
 __AfterMigUserHeader
 #endif /* __AfterMigUserHeader */
 
-#endif	 /* _frida_policyd_user_ */
+#endif	 /* _telco_policyd_user_ */

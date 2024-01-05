@@ -1,11 +1,11 @@
-#include "frida-gadget.h"
+#include "telco-gadget.h"
 
 #import <Foundation/Foundation.h>
 #include <objc/runtime.h>
 #include <pthread.h>
 
 gchar *
-frida_gadget_environment_detect_bundle_id (void)
+telco_gadget_environment_detect_bundle_id (void)
 {
   @autoreleasepool
   {
@@ -15,7 +15,7 @@ frida_gadget_environment_detect_bundle_id (void)
 }
 
 gchar *
-frida_gadget_environment_detect_bundle_name (void)
+telco_gadget_environment_detect_bundle_name (void)
 {
   @autoreleasepool
   {
@@ -25,7 +25,7 @@ frida_gadget_environment_detect_bundle_name (void)
 }
 
 gchar *
-frida_gadget_environment_detect_documents_dir (void)
+telco_gadget_environment_detect_documents_dir (void)
 {
 #if defined (HAVE_IOS) || defined (HAVE_TVOS)
   @autoreleasepool
@@ -40,13 +40,13 @@ frida_gadget_environment_detect_documents_dir (void)
 }
 
 gboolean
-frida_gadget_environment_has_objc_class (const gchar * name)
+telco_gadget_environment_has_objc_class (const gchar * name)
 {
   return objc_getClass (name) != NULL;
 }
 
 void
-frida_gadget_environment_set_thread_name (const gchar * name)
+telco_gadget_environment_set_thread_name (const gchar * name)
 {
   /* For now only implemented on i/macOS as Fruity.Injector relies on it there. */
   pthread_setname_np (name);

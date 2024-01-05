@@ -1,20 +1,20 @@
-import * as crosspath from "@frida/crosspath";
-import type * as backend from "frida-compile";
+import * as crosspath from "@telco/crosspath";
+import type * as backend from "telco-compile";
 import {
     makeDefaultCompilerOptions,
     build as _build,
     watch as _watch,
     queryDefaultAssets as _queryDefaultAssets,
-} from "frida-compile";
-import ts from "frida-compile/ext/typescript.js";
-import fridaFs from "frida-fs";
+} from "telco-compile";
+import ts from "telco-compile/ext/typescript.js";
+import telcoFs from "telco-fs";
 import fs from "fs";
 
 const { DiagnosticCategory, FileWatcherEventKind } = ts;
 
 const { S_IFDIR } = fs.constants;
 
-export const compilerRoot = "/frida-compile";
+export const compilerRoot = "/telco-compile";
 export const compilerNodeModules = compilerRoot + "/node_modules";
 
 export const agentDirectories = new Set<string>(__agentDirectories__);
@@ -60,7 +60,7 @@ export function init(): void {
 }
 
 export function build(projectRoot: string, entrypoint: string, sourceMaps: backend.SourceMaps, compression: backend.Compression): string {
-    const system = new FridaSystem(projectRoot);
+    const system = new TelcoSystem(projectRoot);
     const assets = _queryDefaultAssets(projectRoot, system);
 
     try {
@@ -80,7 +80,7 @@ export function build(projectRoot: string, entrypoint: string, sourceMaps: backe
 }
 
 export function watch(projectRoot: string, entrypoint: string, sourceMaps: backend.SourceMaps, compression: backend.Compression): void {
-    const system = new FridaSystem(projectRoot);
+    const system = new TelcoSystem(projectRoot);
     const assets = _queryDefaultAssets(projectRoot, system);
     _watch({
         projectRoot,
@@ -119,7 +119,7 @@ function patchCompilerHost(host: ts.CompilerHost) {
                 if (sf !== undefined) {
                     let allowCache = true;
 
-                    if (builtinsPath.startsWith("/node_modules/@types/frida-gum/")) {
+                    if (builtinsPath.startsWith("/node_modules/@types/telco-gum/")) {
                         try {
                             const hashOnDisk = Checksum.compute("sha256", File.readAllText(fileName));
                             const hashInCache = Checksum.compute("sha256", agentFiles.get(sf.fileName)!);
@@ -193,7 +193,7 @@ function diagnosticCategoryToString(category: ts.DiagnosticCategory): string {
     }
 }
 
-class FridaSystem implements ts.System {
+class TelcoSystem implements ts.System {
     args = [];
     newLine = "\n";
     useCaseSensitiveFileNames = true;
@@ -317,7 +317,7 @@ class FridaSystem implements ts.System {
 
         if (path.startsWith(this.#projectRoot)) {
             try {
-                for (const entry of fridaFs.list(path).filter(entry => entry.type === S_IFDIR)) {
+                for (const entry of telcoFs.list(path).filter(entry => entry.type === S_IFDIR)) {
                     result.add(entry.name);
                 }
             } catch (e) {
@@ -362,7 +362,7 @@ class FridaSystem implements ts.System {
     }
 
     getMemoryUsage(): number {
-        return Frida.heapSize;
+        return Telco.heapSize;
     }
 
     exit(exitCode?: number): void {
@@ -419,7 +419,7 @@ function nativePathToCompilerPath(path: string): string | null {
         return subPath;
     }
 
-    return "/node_modules/frida-compile" + subPath;
+    return "/node_modules/telco-compile" + subPath;
 }
 
 type WatcherId = number;

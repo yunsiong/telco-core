@@ -14,67 +14,67 @@
 # define SOCK_CLOEXEC 0x80000
 #endif
 
-typedef int FridaUnloadPolicy;
-typedef struct _FridaLinuxInjectorState FridaLinuxInjectorState;
-typedef union _FridaControlMessage FridaControlMessage;
+typedef int TelcoUnloadPolicy;
+typedef struct _TelcoLinuxInjectorState TelcoLinuxInjectorState;
+typedef union _TelcoControlMessage TelcoControlMessage;
 
-enum _FridaUnloadPolicy
+enum _TelcoUnloadPolicy
 {
-  FRIDA_UNLOAD_POLICY_IMMEDIATE,
-  FRIDA_UNLOAD_POLICY_RESIDENT,
-  FRIDA_UNLOAD_POLICY_DEFERRED,
+  TELCO_UNLOAD_POLICY_IMMEDIATE,
+  TELCO_UNLOAD_POLICY_RESIDENT,
+  TELCO_UNLOAD_POLICY_DEFERRED,
 };
 
-struct _FridaLinuxInjectorState
+struct _TelcoLinuxInjectorState
 {
-  int frida_ctrlfd;
+  int telco_ctrlfd;
   int agent_ctrlfd;
 };
 
-union _FridaControlMessage
+union _TelcoControlMessage
 {
   struct cmsghdr header;
   uint8_t storage[CMSG_SPACE (sizeof (int))];
 };
 
-static void * frida_main (void * user_data);
+static void * telco_main (void * user_data);
 
-static int frida_connect (const char * address, const FridaLibcApi * libc);
-static bool frida_send_hello (int sockfd, pid_t thread_id, const FridaLibcApi * libc);
-static bool frida_send_ready (int sockfd, const FridaLibcApi * libc);
-static bool frida_receive_ack (int sockfd, const FridaLibcApi * libc);
-static bool frida_send_bye (int sockfd, FridaUnloadPolicy unload_policy, const FridaLibcApi * libc);
-static bool frida_send_error (int sockfd, FridaMessageType type, const char * message, const FridaLibcApi * libc);
+static int telco_connect (const char * address, const TelcoLibcApi * libc);
+static bool telco_send_hello (int sockfd, pid_t thread_id, const TelcoLibcApi * libc);
+static bool telco_send_ready (int sockfd, const TelcoLibcApi * libc);
+static bool telco_receive_ack (int sockfd, const TelcoLibcApi * libc);
+static bool telco_send_bye (int sockfd, TelcoUnloadPolicy unload_policy, const TelcoLibcApi * libc);
+static bool telco_send_error (int sockfd, TelcoMessageType type, const char * message, const TelcoLibcApi * libc);
 
-static bool frida_receive_chunk (int sockfd, void * buffer, size_t length, const FridaLibcApi * api);
-static int frida_receive_fd (int sockfd, const FridaLibcApi * libc);
-static bool frida_send_chunk (int sockfd, const void * buffer, size_t length, const FridaLibcApi * libc);
-static void frida_enable_close_on_exec (int fd, const FridaLibcApi * libc);
+static bool telco_receive_chunk (int sockfd, void * buffer, size_t length, const TelcoLibcApi * api);
+static int telco_receive_fd (int sockfd, const TelcoLibcApi * libc);
+static bool telco_send_chunk (int sockfd, const void * buffer, size_t length, const TelcoLibcApi * libc);
+static void telco_enable_close_on_exec (int fd, const TelcoLibcApi * libc);
 
-static size_t frida_strlen (const char * str);
+static size_t telco_strlen (const char * str);
 
-static pid_t frida_gettid (void);
+static pid_t telco_gettid (void);
 
 __attribute__ ((section (".text.entrypoint")))
 __attribute__ ((visibility ("default")))
 void
-frida_load (FridaLoaderContext * ctx)
+telco_load (TelcoLoaderContext * ctx)
 {
-  ctx->libc->pthread_create (&ctx->worker, NULL, frida_main, ctx);
+  ctx->libc->pthread_create (&ctx->worker, NULL, telco_main, ctx);
 }
 
 static void *
-frida_main (void * user_data)
+telco_main (void * user_data)
 {
-  FridaLoaderContext * ctx = user_data;
-  const FridaLibcApi * libc = ctx->libc;
+  TelcoLoaderContext * ctx = user_data;
+  const TelcoLibcApi * libc = ctx->libc;
   pid_t thread_id;
-  FridaUnloadPolicy unload_policy;
+  TelcoUnloadPolicy unload_policy;
   int ctrlfd_for_peer, ctrlfd, agent_codefd, agent_ctrlfd;
-  FridaLinuxInjectorState injector_state;
+  TelcoLinuxInjectorState injector_state;
 
-  thread_id = frida_gettid ();
-  unload_policy = FRIDA_UNLOAD_POLICY_IMMEDIATE;
+  thread_id = telco_gettid ();
+  unload_policy = TELCO_UNLOAD_POLICY_IMMEDIATE;
   ctrlfd = -1;
   agent_codefd = -1;
   agent_ctrlfd = -1;
@@ -86,7 +86,7 @@ frida_main (void * user_data)
   ctrlfd = ctx->ctrlfds[1];
   if (ctrlfd != -1)
   {
-    if (!frida_send_hello (ctrlfd, thread_id, libc))
+    if (!telco_send_hello (ctrlfd, thread_id, libc))
     {
       libc->close (ctrlfd);
       ctrlfd = -1;
@@ -94,11 +94,11 @@ frida_main (void * user_data)
   }
   if (ctrlfd == -1)
   {
-    ctrlfd = frida_connect (ctx->fallback_address, libc);
+    ctrlfd = telco_connect (ctx->fallback_address, libc);
     if (ctrlfd == -1)
       goto beach;
 
-    if (!frida_send_hello (ctrlfd, thread_id, libc))
+    if (!telco_send_hello (ctrlfd, thread_id, libc))
       goto beach;
   }
 
@@ -107,7 +107,7 @@ frida_main (void * user_data)
     char agent_path[32];
     const void * pretend_caller_addr = libc->close;
 
-    agent_codefd = frida_receive_fd (ctrlfd, libc);
+    agent_codefd = telco_receive_fd (ctrlfd, libc);
     if (agent_codefd == -1)
       goto beach;
 
@@ -128,47 +128,47 @@ frida_main (void * user_data)
       goto dlsym_failed;
   }
 
-  agent_ctrlfd = frida_receive_fd (ctrlfd, libc);
+  agent_ctrlfd = telco_receive_fd (ctrlfd, libc);
   if (agent_ctrlfd != -1)
-    frida_enable_close_on_exec (agent_ctrlfd, libc);
+    telco_enable_close_on_exec (agent_ctrlfd, libc);
 
-  if (!frida_send_ready (ctrlfd, libc))
+  if (!telco_send_ready (ctrlfd, libc))
     goto beach;
-  if (!frida_receive_ack (ctrlfd, libc))
+  if (!telco_receive_ack (ctrlfd, libc))
     goto beach;
 
-  injector_state.frida_ctrlfd = ctrlfd;
+  injector_state.telco_ctrlfd = ctrlfd;
   injector_state.agent_ctrlfd = agent_ctrlfd;
 
   ctx->agent_entrypoint_impl (ctx->agent_data, &unload_policy, &injector_state);
 
-  ctrlfd = injector_state.frida_ctrlfd;
+  ctrlfd = injector_state.telco_ctrlfd;
   agent_ctrlfd = injector_state.agent_ctrlfd;
 
   goto beach;
 
 dlopen_failed:
   {
-    frida_send_error (ctrlfd,
-        FRIDA_MESSAGE_ERROR_DLOPEN,
+    telco_send_error (ctrlfd,
+        TELCO_MESSAGE_ERROR_DLOPEN,
         (libc->dlerror != NULL) ? libc->dlerror () : "Unable to load library",
         libc);
     goto beach;
   }
 dlsym_failed:
   {
-    frida_send_error (ctrlfd,
-        FRIDA_MESSAGE_ERROR_DLSYM,
+    telco_send_error (ctrlfd,
+        TELCO_MESSAGE_ERROR_DLSYM,
         (libc->dlerror != NULL) ? libc->dlerror () : "Unable to find entrypoint",
         libc);
     goto beach;
   }
 beach:
   {
-    if (unload_policy == FRIDA_UNLOAD_POLICY_IMMEDIATE && ctx->agent_handle != NULL)
+    if (unload_policy == TELCO_UNLOAD_POLICY_IMMEDIATE && ctx->agent_handle != NULL)
       libc->dlclose (ctx->agent_handle);
 
-    if (unload_policy != FRIDA_UNLOAD_POLICY_DEFERRED)
+    if (unload_policy != TELCO_UNLOAD_POLICY_DEFERRED)
       libc->pthread_detach (ctx->worker);
 
     if (agent_ctrlfd != -1)
@@ -179,7 +179,7 @@ beach:
 
     if (ctrlfd != -1)
     {
-      frida_send_bye (ctrlfd, unload_policy, libc);
+      telco_send_bye (ctrlfd, unload_policy, libc);
       libc->close (ctrlfd);
     }
 
@@ -190,7 +190,7 @@ beach:
 /* TODO: Handle EINTR. */
 
 static int
-frida_connect (const char * address, const FridaLibcApi * libc)
+telco_connect (const char * address, const TelcoLibcApi * libc)
 {
   bool success = false;
   int sockfd;
@@ -224,75 +224,75 @@ beach:
 }
 
 static bool
-frida_send_hello (int sockfd, pid_t thread_id, const FridaLibcApi * libc)
+telco_send_hello (int sockfd, pid_t thread_id, const TelcoLibcApi * libc)
 {
-  FridaMessageType type = FRIDA_MESSAGE_HELLO;
-  FridaHelloMessage hello = {
+  TelcoMessageType type = TELCO_MESSAGE_HELLO;
+  TelcoHelloMessage hello = {
     .thread_id = thread_id,
   };
 
-  if (!frida_send_chunk (sockfd, &type, sizeof (type), libc))
+  if (!telco_send_chunk (sockfd, &type, sizeof (type), libc))
     return false;
 
-  return frida_send_chunk (sockfd, &hello, sizeof (hello), libc);
+  return telco_send_chunk (sockfd, &hello, sizeof (hello), libc);
 }
 
 static bool
-frida_send_ready (int sockfd, const FridaLibcApi * libc)
+telco_send_ready (int sockfd, const TelcoLibcApi * libc)
 {
-  FridaMessageType type = FRIDA_MESSAGE_READY;
+  TelcoMessageType type = TELCO_MESSAGE_READY;
 
-  return frida_send_chunk (sockfd, &type, sizeof (type), libc);
+  return telco_send_chunk (sockfd, &type, sizeof (type), libc);
 }
 
 static bool
-frida_receive_ack (int sockfd, const FridaLibcApi * libc)
+telco_receive_ack (int sockfd, const TelcoLibcApi * libc)
 {
-  FridaMessageType type;
+  TelcoMessageType type;
 
-  if (!frida_receive_chunk (sockfd, &type, sizeof (type), libc))
+  if (!telco_receive_chunk (sockfd, &type, sizeof (type), libc))
     return false;
 
-  return type == FRIDA_MESSAGE_ACK;
+  return type == TELCO_MESSAGE_ACK;
 }
 
 static bool
-frida_send_bye (int sockfd, FridaUnloadPolicy unload_policy, const FridaLibcApi * libc)
+telco_send_bye (int sockfd, TelcoUnloadPolicy unload_policy, const TelcoLibcApi * libc)
 {
-  FridaMessageType type = FRIDA_MESSAGE_BYE;
-  FridaByeMessage bye = {
+  TelcoMessageType type = TELCO_MESSAGE_BYE;
+  TelcoByeMessage bye = {
     .unload_policy = unload_policy,
   };
 
-  if (!frida_send_chunk (sockfd, &type, sizeof (type), libc))
+  if (!telco_send_chunk (sockfd, &type, sizeof (type), libc))
     return false;
 
-  return frida_send_chunk (sockfd, &bye, sizeof (bye), libc);
+  return telco_send_chunk (sockfd, &bye, sizeof (bye), libc);
 }
 
 static bool
-frida_send_error (int sockfd, FridaMessageType type, const char * message, const FridaLibcApi * libc)
+telco_send_error (int sockfd, TelcoMessageType type, const char * message, const TelcoLibcApi * libc)
 {
   uint16_t length;
 
-  length = frida_strlen (message);
+  length = telco_strlen (message);
 
-  #define FRIDA_SEND_VALUE(v) \
-      if (!frida_send_chunk (sockfd, &(v), sizeof (v), libc)) \
+  #define TELCO_SEND_VALUE(v) \
+      if (!telco_send_chunk (sockfd, &(v), sizeof (v), libc)) \
         return false
-  #define FRIDA_SEND_BYTES(data, size) \
-      if (!frida_send_chunk (sockfd, data, size, libc)) \
+  #define TELCO_SEND_BYTES(data, size) \
+      if (!telco_send_chunk (sockfd, data, size, libc)) \
         return false
 
-  FRIDA_SEND_VALUE (type);
-  FRIDA_SEND_VALUE (length);
-  FRIDA_SEND_BYTES (message, length);
+  TELCO_SEND_VALUE (type);
+  TELCO_SEND_VALUE (length);
+  TELCO_SEND_BYTES (message, length);
 
   return true;
 }
 
 static bool
-frida_receive_chunk (int sockfd, void * buffer, size_t length, const FridaLibcApi * libc)
+telco_receive_chunk (int sockfd, void * buffer, size_t length, const TelcoLibcApi * libc)
 {
   void * cursor = buffer;
   size_t remaining = length;
@@ -325,7 +325,7 @@ frida_receive_chunk (int sockfd, void * buffer, size_t length, const FridaLibcAp
 }
 
 static int
-frida_receive_fd (int sockfd, const FridaLibcApi * libc)
+telco_receive_fd (int sockfd, const TelcoLibcApi * libc)
 {
   int res;
   uint8_t dummy;
@@ -333,7 +333,7 @@ frida_receive_fd (int sockfd, const FridaLibcApi * libc)
     .iov_base = &dummy,
     .iov_len = sizeof (dummy)
   };
-  FridaControlMessage control;
+  TelcoControlMessage control;
   struct msghdr msg = {
     .msg_name = NULL,
     .msg_namelen = 0,
@@ -351,7 +351,7 @@ frida_receive_fd (int sockfd, const FridaLibcApi * libc)
 }
 
 static bool
-frida_send_chunk (int sockfd, const void * buffer, size_t length, const FridaLibcApi * libc)
+telco_send_chunk (int sockfd, const void * buffer, size_t length, const TelcoLibcApi * libc)
 {
   const void * cursor = buffer;
   size_t remaining = length;
@@ -372,13 +372,13 @@ frida_send_chunk (int sockfd, const void * buffer, size_t length, const FridaLib
 }
 
 static void
-frida_enable_close_on_exec (int fd, const FridaLibcApi * libc)
+telco_enable_close_on_exec (int fd, const TelcoLibcApi * libc)
 {
   libc->fcntl (fd, F_SETFD, libc->fcntl (fd, F_GETFD) | FD_CLOEXEC);
 }
 
 static size_t
-frida_strlen (const char * str)
+telco_strlen (const char * str)
 {
   size_t n = 0;
   const char * cursor;
@@ -393,7 +393,7 @@ frida_strlen (const char * str)
 }
 
 static pid_t
-frida_gettid (void)
+telco_gettid (void)
 {
-  return frida_syscall_0 (SYS_gettid);
+  return telco_syscall_0 (SYS_gettid);
 }

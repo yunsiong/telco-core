@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public bool can_test_cross_arch_injection =
 #if CROSS_ARCH
 		true
@@ -8,7 +8,7 @@ namespace Frida {
 		;
 }
 
-namespace Frida.Test {
+namespace Telco.Test {
 	public static void run (string[] args) {
 		Environment.init (ref args);
 
@@ -40,17 +40,17 @@ namespace Frida.Test {
 			}
 		}
 
-		Frida.SystemTest.add_tests ();
+		Telco.SystemTest.add_tests ();
 
-		Frida.InjectorTest.add_tests ();
+		Telco.InjectorTest.add_tests ();
 
-		Frida.AgentTest.add_tests ();
+		Telco.AgentTest.add_tests ();
 #if !WINDOWS
-		Frida.GadgetTest.add_tests ();
+		Telco.GadgetTest.add_tests ();
 #endif
-		Frida.HostSessionTest.add_tests ();
+		Telco.HostSessionTest.add_tests ();
 
-		Frida.CompilerTest.add_tests ();
+		Telco.CompilerTest.add_tests ();
 
 		GLib.Test.run ();
 
@@ -111,7 +111,7 @@ namespace Frida.Test {
 		}
 
 		string abi_name;
-		switch (Frida.Test.cpu ()) {
+		switch (Telco.Test.cpu ()) {
 			case CPU.X86_32:
 				abi_name = "x86";
 				break;

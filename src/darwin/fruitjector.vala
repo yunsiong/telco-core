@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class Fruitjector : Object, Injector {
 		public signal void injected (uint id, uint pid, bool has_mapped_module, DarwinModuleDetails mapped_module);
 

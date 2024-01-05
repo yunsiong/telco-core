@@ -1,5 +1,5 @@
-[CCode (gir_namespace = "FridaLLDB", gir_version = "1.0")]
-namespace Frida.LLDB {
+[CCode (gir_namespace = "TelcoLLDB", gir_version = "1.0")]
+namespace Telco.LLDB {
 	public class Client : GDB.Client {
 		public Process? process {
 			get {
@@ -534,7 +534,7 @@ namespace Frida.LLDB {
 		AUTO,
 		DISABLE;
 
-		public static ASLR from_nick (string nick) throws Frida.Error {
+		public static ASLR from_nick (string nick) throws Telco.Error {
 			return Marshal.enum_from_nick<ASLR> (nick);
 		}
 	}
@@ -854,7 +854,7 @@ namespace Frida.LLDB {
 		TARGET_EXC_SOFTWARE,
 		TARGET_EXC_BREAKPOINT;
 
-		public static Signal from_nick (string nick) throws Frida.Error {
+		public static Signal from_nick (string nick) throws Telco.Error {
 			return Marshal.enum_from_nick<Signal> (nick);
 		}
 
@@ -883,7 +883,7 @@ namespace Frida.LLDB {
 		EXC_GUARD,
 		EXC_CORPSE_NOTIFY;
 
-		public static MachExceptionType from_nick (string nick) throws Frida.Error {
+		public static MachExceptionType from_nick (string nick) throws Telco.Error {
 			return Marshal.enum_from_nick<MachExceptionType> (nick);
 		}
 

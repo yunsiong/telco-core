@@ -3,7 +3,7 @@
 
 /* Module substitute2_daemon */
 
-#include "frida-tvos.h"
+#include "telco-tvos.h"
 
 #include <string.h>
 #include <mach/ndr.h>

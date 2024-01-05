@@ -1,4 +1,4 @@
-namespace Frida.Inject {
+namespace Telco.Inject {
 	private static Application application;
 
 	private static string? device_id;
@@ -352,7 +352,7 @@ namespace Frida.Inject {
 			 * by the user including the newline.
 			 *
 			 * rpc.exports = {
-			 *   onFridaStdin(data) {
+			 *   onTelcoStdin(data) {
 			 *     ...
 			 *   }
 			 * };
@@ -517,7 +517,7 @@ namespace Frida.Inject {
 				} else {
 					source = script_source;
 
-					options.name = "frida";
+					options.name = "telco";
 				}
 
 				options.runtime = script_runtime;
@@ -591,7 +591,7 @@ namespace Frida.Inject {
 		private async TerminalMode query_terminal_mode () {
 			Json.Node mode_value;
 			try {
-				mode_value = yield rpc_client.call ("getFridaTerminalMode", new Json.Node[] {}, io_cancellable);
+				mode_value = yield rpc_client.call ("getTelcoTerminalMode", new Json.Node[] {}, io_cancellable);
 			} catch (GLib.Error e) {
 				return COOKED;
 			}
@@ -635,7 +635,7 @@ namespace Frida.Inject {
 		public void on_stdin (string data) {
 			var data_value = new Json.Node.alloc ().init_string (data);
 
-			rpc_client.call.begin ("onFridaStdin", new Json.Node[] { data_value }, io_cancellable);
+			rpc_client.call.begin ("onTelcoStdin", new Json.Node[] { data_value }, io_cancellable);
 		}
 
 		private void on_script_file_changed (File file, File? other_file, FileMonitorEvent event_type) {
@@ -649,7 +649,7 @@ namespace Frida.Inject {
 				try_reload.begin ();
 				return false;
 			});
-			source.attach (Frida.get_main_context ());
+			source.attach (Telco.get_main_context ());
 
 			if (script_unchanged_timeout != null)
 				script_unchanged_timeout.destroy ();
@@ -708,19 +708,19 @@ namespace Frida.Inject {
 		}
 
 		/**
-		 * The script can send strings to frida-inject to write to its stdout or
+		 * The script can send strings to telco-inject to write to its stdout or
 		 * stderr. This can be done either inside the RPC handler for receiving
-		 * input from frida-inject, or elsewhere at any arbitrary point in the
+		 * input from telco-inject, or elsewhere at any arbitrary point in the
 		 * script. We use the following syntax:
 		 *
-		 * send(['frida:stdout', 'DATA']);
-		 * send(['frida:stderr', 'DATA']);
+		 * send(['telco:stdout', 'DATA']);
+		 * send(['telco:stderr', 'DATA']);
 		 *
 		 * The resulting message will look as shown below. Note that we don't
 		 * use the parent object's `type` field since this is reserved for use
 		 * by the runtime itself.
 		 *
-		 * {"type":"send","payload":["frida:stdout","DATA"]}
+		 * {"type":"send","payload":["telco:stdout","DATA"]}
 		 */
 		private bool try_handle_stdout_message (Json.Object message) {
 			var payload = message.get_member ("payload");
@@ -737,8 +737,8 @@ namespace Frida.Inject {
 
 			var type = first_element.get_string ();
 			switch (type) {
-				case "frida:stdout":
-				case "frida:stderr":
+				case "telco:stdout":
+				case "telco:stderr":
 					break;
 				default:
 					return false;
@@ -750,11 +750,11 @@ namespace Frida.Inject {
 			var str = second_element.get_string ();
 
 			switch (type) {
-				case "frida:stdout":
+				case "telco:stdout":
 					stdout.write (str.data);
 					stdout.flush ();
 					return true;
-				case "frida:stderr":
+				case "telco:stderr":
 					stderr.write (str.data);
 					return true;
 				default:

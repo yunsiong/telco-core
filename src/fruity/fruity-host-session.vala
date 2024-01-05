@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class FruityHostSessionBackend : Object, HostSessionBackend {
 		private Fruity.UsbmuxClient control_client;
 
@@ -471,7 +471,7 @@ namespace Frida {
 		private Cancellable io_cancellable = new Cancellable ();
 
 		private const double MIN_SERVER_CHECK_INTERVAL = 5.0;
-		private const string GADGET_APP_ID = "re.frida.Gadget";
+		private const string GADGET_APP_ID = "re.telco.Gadget";
 		private const string DEBUGSERVER_ENDPOINT_MODERN = "com.apple.debugserver.DVTSecureSocketProxy";
 		private const string DEBUGSERVER_ENDPOINT_LEGACY = "com.apple.debugserver?tls=handshake-only";
 		private const string[] DEBUGSERVER_ENDPOINT_CANDIDATES = {
@@ -1063,7 +1063,7 @@ namespace Frida {
 			if (gadget_value != null) {
 				if (!gadget_value.is_of_type (VariantType.STRING)) {
 					throw new Error.INVALID_ARGUMENT ("The 'gadget' option must be a string pointing at the " +
-						"frida-gadget.dylib to use");
+						"telco-gadget.dylib to use");
 				}
 				gadget_path = gadget_value.get_string ();
 			}
@@ -1186,7 +1186,7 @@ namespace Frida {
 			}
 
 			if (pid == 0)
-				throw new Error.NOT_SUPPORTED ("The Frida system session is not available on jailed iOS");
+				throw new Error.NOT_SUPPORTED ("The Telco system session is not available on jailed iOS");
 
 			var lockdown = yield lockdown_provider.get_lockdown_client (cancellable);
 			var lldb = yield start_lldb_service (lockdown, cancellable);
@@ -1421,7 +1421,7 @@ namespace Frida {
 				}
 
 				if (connection.closed)
-					throw new Error.SERVER_NOT_RUNNING ("Unable to connect to remote frida-server");
+					throw new Error.SERVER_NOT_RUNNING ("Unable to connect to remote telco-server");
 
 				var server = new RemoteServer (session, connection, flavor, transport_broker);
 				attach_remote_server (server);
@@ -1442,11 +1442,11 @@ namespace Frida {
 					last_server_check_error = null;
 				} else {
 					if (e is Error.SERVER_NOT_RUNNING) {
-						api_error = new Error.SERVER_NOT_RUNNING ("Unable to connect to remote frida-server");
+						api_error = new Error.SERVER_NOT_RUNNING ("Unable to connect to remote telco-server");
 					} else if (connection != null) {
-						api_error = new Error.PROTOCOL ("Incompatible frida-server version");
+						api_error = new Error.PROTOCOL ("Incompatible telco-server version");
 					} else {
-						api_error = new Error.SERVER_NOT_RUNNING ("Unable to connect to remote frida-server: %s",
+						api_error = new Error.SERVER_NOT_RUNNING ("Unable to connect to remote telco-server: %s",
 							e.message);
 					}
 
@@ -1609,7 +1609,7 @@ namespace Frida {
 				try {
 					string? path = gadget_path;
 					if (path == null) {
-						path = Path.build_filename (Environment.get_user_cache_dir (), "frida", "gadget-ios.dylib");
+						path = Path.build_filename (Environment.get_user_cache_dir (), "telco", "gadget-ios.dylib");
 						if (!FileUtils.test (path, FileTest.EXISTS)) {
 							throw new Error.NOT_SUPPORTED ("Need Gadget to attach on jailed iOS; its default location is: %s",
 								path);

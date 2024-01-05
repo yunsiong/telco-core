@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public enum Toolchain {
 		MICROSOFT,
 		APPLE,
@@ -320,9 +320,9 @@ namespace Frida {
 			if (toolchain != Toolchain.MICROSOFT) {
 				asource.put_string (
 					"#if (defined (__WIN32__) && defined (__i386__)) || defined (__APPLE__)\n" +
-					"# define FRIDA_CSYM(x) _ ## x\n" +
+					"# define TELCO_CSYM(x) _ ## x\n" +
 					"#else\n" +
-					"# define FRIDA_CSYM(x) x\n" +
+					"# define TELCO_CSYM(x) x\n" +
 					"#endif\n");
 			}
 
@@ -374,8 +374,8 @@ namespace Frida {
 						else
 							asource.put_string (align_for_generic_simd_compatibility);
 
-						asource.put_string (".globl FRIDA_CSYM (" + blob_identifier + ")\n");
-						asource.put_string ("FRIDA_CSYM (" + blob_identifier + "):\n");
+						asource.put_string (".globl TELCO_CSYM (" + blob_identifier + ")\n");
+						asource.put_string ("TELCO_CSYM (" + blob_identifier + "):\n");
 						asource.put_string (".incbin \"" + prepared_resource.file.get_path () + "\"\n");
 
 						if (!is_dylib)

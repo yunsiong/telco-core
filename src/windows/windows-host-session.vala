@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class WindowsHostSessionBackend : Object, HostSessionBackend {
 		private WindowsHostSessionProvider local_provider;
 
@@ -113,14 +113,14 @@ namespace Frida {
 			injector = new Winjector (helper, false, tempdir);
 			injector.uninjected.connect (on_uninjected);
 
-			var blob32 = Frida.Data.Agent.get_frida_agent_32_dll_blob ();
-			var blob64 = Frida.Data.Agent.get_frida_agent_64_dll_blob ();
-			var dbghelp32 = Frida.Data.Agent.get_dbghelp_32_dll_blob ();
-			var dbghelp64 = Frida.Data.Agent.get_dbghelp_64_dll_blob ();
-			var symsrv32 = Frida.Data.Agent.get_symsrv_32_dll_blob ();
-			var symsrv64 = Frida.Data.Agent.get_symsrv_64_dll_blob ();
+			var blob32 = Telco.Data.Agent.get_telco_agent_32_dll_blob ();
+			var blob64 = Telco.Data.Agent.get_telco_agent_64_dll_blob ();
+			var dbghelp32 = Telco.Data.Agent.get_dbghelp_32_dll_blob ();
+			var dbghelp64 = Telco.Data.Agent.get_dbghelp_64_dll_blob ();
+			var symsrv32 = Telco.Data.Agent.get_symsrv_32_dll_blob ();
+			var symsrv64 = Telco.Data.Agent.get_symsrv_64_dll_blob ();
 
-			agent = new AgentDescriptor (PathTemplate ("<arch>\\frida-agent.dll"),
+			agent = new AgentDescriptor (PathTemplate ("<arch>\\telco-agent.dll"),
 				new Bytes.static (blob32.data),
 				new Bytes.static (blob64.data),
 				new AgentResource[] {
@@ -274,7 +274,7 @@ namespace Frida {
 			var stream_request = Pipe.open (t.local_address, cancellable);
 
 			var winjector = injector as Winjector;
-			var id = yield winjector.inject_library_resource (pid, agent, "frida_agent_main",
+			var id = yield winjector.inject_library_resource (pid, agent, "telco_agent_main",
 				make_agent_parameters (pid, t.remote_address, options), cancellable);
 			injectee_by_pid[pid] = id;
 

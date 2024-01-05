@@ -1,3 +1,3 @@
 public static void main (string[] args) {
-	Frida.Test.run (args);
+	Telco.Test.run (args);
 }

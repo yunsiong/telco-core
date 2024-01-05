@@ -1,5 +1,5 @@
-[CCode (gir_namespace = "FridaBarebone", gir_version = "1.0")]
-namespace Frida.Barebone {
+[CCode (gir_namespace = "TelcoBarebone", gir_version = "1.0")]
+namespace Telco.Barebone {
 	public interface Allocator : Object {
 		public abstract size_t page_size {
 			get;
@@ -42,7 +42,7 @@ namespace Frida.Barebone {
 					example_base = 0x0800000000 + ((2048 - 3) * 1024 * 1024);
 				else
 					example_base = 0x0040000000 + (128 * 1024 * 1024);
-				throw new Error.NOT_SUPPORTED ("To enable this feature, set FRIDA_BAREBONE_HEAP_BASE to the physical " +
+				throw new Error.NOT_SUPPORTED ("To enable this feature, set TELCO_BAREBONE_HEAP_BASE to the physical " +
 					"base address to use, e.g. 0x%" + uint64.FORMAT_MODIFIER + "x", example_base);
 			}
 

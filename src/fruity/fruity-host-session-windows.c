@@ -1,44 +1,44 @@
-#include "frida-core.h"
+#include "telco-core.h"
 
 #include "../windows/icon-helpers.h"
 
 #include <setupapi.h>
 #include <devguid.h>
 
-typedef struct _FridaMobileDeviceInfo FridaMobileDeviceInfo;
-typedef struct _FridaImageDeviceInfo FridaImageDeviceInfo;
+typedef struct _TelcoMobileDeviceInfo TelcoMobileDeviceInfo;
+typedef struct _TelcoImageDeviceInfo TelcoImageDeviceInfo;
 
-typedef struct _FridaFindMobileDeviceContext FridaFindMobileDeviceContext;
-typedef struct _FridaFindImageDeviceContext FridaFindImageDeviceContext;
+typedef struct _TelcoFindMobileDeviceContext TelcoFindMobileDeviceContext;
+typedef struct _TelcoFindImageDeviceContext TelcoFindImageDeviceContext;
 
-typedef struct _FridaDeviceInfo FridaDeviceInfo;
+typedef struct _TelcoDeviceInfo TelcoDeviceInfo;
 
-typedef gboolean (* FridaEnumerateDeviceFunc) (const FridaDeviceInfo * device_info, gpointer user_data);
+typedef gboolean (* TelcoEnumerateDeviceFunc) (const TelcoDeviceInfo * device_info, gpointer user_data);
 
-struct _FridaMobileDeviceInfo
+struct _TelcoMobileDeviceInfo
 {
   WCHAR * location;
 };
 
-struct _FridaImageDeviceInfo
+struct _TelcoImageDeviceInfo
 {
   WCHAR * friendly_name;
   WCHAR * icon_url;
 };
 
-struct _FridaFindMobileDeviceContext
+struct _TelcoFindMobileDeviceContext
 {
   const WCHAR * udid;
-  FridaMobileDeviceInfo * mobile_device;
+  TelcoMobileDeviceInfo * mobile_device;
 };
 
-struct _FridaFindImageDeviceContext
+struct _TelcoFindImageDeviceContext
 {
   const WCHAR * location;
-  FridaImageDeviceInfo * image_device;
+  TelcoImageDeviceInfo * image_device;
 };
 
-struct _FridaDeviceInfo
+struct _TelcoDeviceInfo
 {
   WCHAR * device_path;
   WCHAR * instance_id;
@@ -49,37 +49,37 @@ struct _FridaDeviceInfo
   PSP_DEVINFO_DATA device_info_data;
 };
 
-static FridaMobileDeviceInfo * find_mobile_device_by_udid (const WCHAR * udid);
-static FridaImageDeviceInfo * find_image_device_by_location (const WCHAR * location);
+static TelcoMobileDeviceInfo * find_mobile_device_by_udid (const WCHAR * udid);
+static TelcoImageDeviceInfo * find_image_device_by_location (const WCHAR * location);
 
-static gboolean compare_udid_and_create_mobile_device_info_if_matching (const FridaDeviceInfo * device_info, gpointer user_data);
-static gboolean compare_location_and_create_image_device_info_if_matching (const FridaDeviceInfo * device_info, gpointer user_data);
+static gboolean compare_udid_and_create_mobile_device_info_if_matching (const TelcoDeviceInfo * device_info, gpointer user_data);
+static gboolean compare_location_and_create_image_device_info_if_matching (const TelcoDeviceInfo * device_info, gpointer user_data);
 
-FridaMobileDeviceInfo * frida_mobile_device_info_new (WCHAR * location);
-void frida_mobile_device_info_free (FridaMobileDeviceInfo * mdev);
+TelcoMobileDeviceInfo * telco_mobile_device_info_new (WCHAR * location);
+void telco_mobile_device_info_free (TelcoMobileDeviceInfo * mdev);
 
-FridaImageDeviceInfo * frida_image_device_info_new (WCHAR * friendly_name, WCHAR * icon_url);
-void frida_image_device_info_free (FridaImageDeviceInfo * idev);
+TelcoImageDeviceInfo * telco_image_device_info_new (WCHAR * friendly_name, WCHAR * icon_url);
+void telco_image_device_info_free (TelcoImageDeviceInfo * idev);
 
-static void frida_foreach_usb_device (const GUID * guid, FridaEnumerateDeviceFunc func, gpointer user_data);
+static void telco_foreach_usb_device (const GUID * guid, TelcoEnumerateDeviceFunc func, gpointer user_data);
 
-static WCHAR * frida_read_device_registry_string_property (HANDLE info_set, SP_DEVINFO_DATA * info_data, DWORD prop_id);
-static WCHAR * frida_read_registry_string (HKEY key, WCHAR * value_name);
-static WCHAR * frida_read_registry_multi_string (HKEY key, WCHAR * value_name);
-static gpointer frida_read_registry_value (HKEY key, WCHAR * value_name, DWORD expected_type);
+static WCHAR * telco_read_device_registry_string_property (HANDLE info_set, SP_DEVINFO_DATA * info_data, DWORD prop_id);
+static WCHAR * telco_read_registry_string (HKEY key, WCHAR * value_name);
+static WCHAR * telco_read_registry_multi_string (HKEY key, WCHAR * value_name);
+static gpointer telco_read_registry_value (HKEY key, WCHAR * value_name, DWORD expected_type);
 
 static GUID GUID_APPLE_USB = { 0xF0B32BE3, 0x6678, 0x4879, { 0x92, 0x30, 0x0E4, 0x38, 0x45, 0xD8, 0x05, 0xEE } };
 
 void
-_frida_fruity_host_session_backend_extract_details_for_device (gint product_id, const char * udid, char ** name, GVariant ** icon,
+_telco_fruity_host_session_backend_extract_details_for_device (gint product_id, const char * udid, char ** name, GVariant ** icon,
     GError ** error)
 {
   gboolean result = FALSE;
   GString * udid_plain;
   const gchar * cursor;
   WCHAR * udid_utf16 = NULL;
-  FridaMobileDeviceInfo * mdev = NULL;
-  FridaImageDeviceInfo * idev = NULL;
+  TelcoMobileDeviceInfo * mdev = NULL;
+  TelcoImageDeviceInfo * idev = NULL;
   GVariant * idev_icon = NULL;
 
   udid_plain = g_string_sized_new (40);
@@ -99,7 +99,7 @@ _frida_fruity_host_session_backend_extract_details_for_device (gint product_id, 
   idev = find_image_device_by_location (mdev->location);
   if (idev != NULL)
   {
-    idev_icon = _frida_icon_from_resource_url (idev->icon_url, FRIDA_ICON_SMALL);
+    idev_icon = _telco_icon_from_resource_url (idev->icon_url, TELCO_ICON_SMALL);
   }
 
   if (idev_icon != NULL)
@@ -119,47 +119,47 @@ beach:
   if (!result)
   {
     g_set_error (error,
-        FRIDA_ERROR,
-        FRIDA_ERROR_NOT_SUPPORTED,
+        TELCO_ERROR,
+        TELCO_ERROR_NOT_SUPPORTED,
         "Unable to extract details for device by UDID '%s'", udid);
   }
 
-  frida_image_device_info_free (idev);
-  frida_mobile_device_info_free (mdev);
+  telco_image_device_info_free (idev);
+  telco_mobile_device_info_free (mdev);
   g_free (udid_utf16);
   g_string_free (udid_plain, TRUE);
 }
 
-static FridaMobileDeviceInfo *
+static TelcoMobileDeviceInfo *
 find_mobile_device_by_udid (const WCHAR * udid)
 {
-  FridaFindMobileDeviceContext ctx;
+  TelcoFindMobileDeviceContext ctx;
 
   ctx.udid = udid;
   ctx.mobile_device = NULL;
 
-  frida_foreach_usb_device (&GUID_APPLE_USB, compare_udid_and_create_mobile_device_info_if_matching, &ctx);
+  telco_foreach_usb_device (&GUID_APPLE_USB, compare_udid_and_create_mobile_device_info_if_matching, &ctx);
 
   return ctx.mobile_device;
 }
 
-static FridaImageDeviceInfo *
+static TelcoImageDeviceInfo *
 find_image_device_by_location (const WCHAR * location)
 {
-  FridaFindImageDeviceContext ctx;
+  TelcoFindImageDeviceContext ctx;
 
   ctx.location = location;
   ctx.image_device = NULL;
 
-  frida_foreach_usb_device (&GUID_DEVCLASS_IMAGE, compare_location_and_create_image_device_info_if_matching, &ctx);
+  telco_foreach_usb_device (&GUID_DEVCLASS_IMAGE, compare_location_and_create_image_device_info_if_matching, &ctx);
 
   return ctx.image_device;
 }
 
 static gboolean
-compare_udid_and_create_mobile_device_info_if_matching (const FridaDeviceInfo * device_info, gpointer user_data)
+compare_udid_and_create_mobile_device_info_if_matching (const TelcoDeviceInfo * device_info, gpointer user_data)
 {
-  FridaFindMobileDeviceContext * ctx = (FridaFindMobileDeviceContext *) user_data;
+  TelcoFindMobileDeviceContext * ctx = (TelcoFindMobileDeviceContext *) user_data;
   WCHAR * udid, * location;
   size_t udid_len;
 
@@ -188,7 +188,7 @@ try_device_path:
 
 match:
   location = (WCHAR *) g_memdup (device_info->location, ((guint) wcslen (device_info->location) + 1) * sizeof (WCHAR));
-  ctx->mobile_device = frida_mobile_device_info_new (location);
+  ctx->mobile_device = telco_mobile_device_info_new (location);
 
   return FALSE;
 
@@ -197,9 +197,9 @@ keep_looking:
 }
 
 static gboolean
-compare_location_and_create_image_device_info_if_matching (const FridaDeviceInfo * device_info, gpointer user_data)
+compare_location_and_create_image_device_info_if_matching (const TelcoDeviceInfo * device_info, gpointer user_data)
 {
-  FridaFindImageDeviceContext * ctx = (FridaFindImageDeviceContext *) user_data;
+  TelcoFindImageDeviceContext * ctx = (TelcoFindImageDeviceContext *) user_data;
   HKEY devkey = (HKEY) INVALID_HANDLE_VALUE;
   WCHAR * friendly_name = NULL;
   WCHAR * icon_url = NULL;
@@ -211,19 +211,19 @@ compare_location_and_create_image_device_info_if_matching (const FridaDeviceInfo
   if (devkey == INVALID_HANDLE_VALUE)
     goto keep_looking;
 
-  friendly_name = frida_read_registry_string (devkey, L"FriendlyName");
+  friendly_name = telco_read_registry_string (devkey, L"FriendlyName");
   if (friendly_name == NULL)
   {
-    friendly_name = frida_read_registry_string (devkey, L"Label");
+    friendly_name = telco_read_registry_string (devkey, L"Label");
     if (friendly_name == NULL)
       goto keep_looking;
   }
 
-  icon_url = frida_read_registry_multi_string (devkey, L"Icons");
+  icon_url = telco_read_registry_multi_string (devkey, L"Icons");
   if (icon_url == NULL)
     goto keep_looking;
 
-  ctx->image_device = frida_image_device_info_new (friendly_name, icon_url);
+  ctx->image_device = telco_image_device_info_new (friendly_name, icon_url);
 
   RegCloseKey (devkey);
   return FALSE;
@@ -236,19 +236,19 @@ keep_looking:
   return TRUE;
 }
 
-FridaMobileDeviceInfo *
-frida_mobile_device_info_new (WCHAR * location)
+TelcoMobileDeviceInfo *
+telco_mobile_device_info_new (WCHAR * location)
 {
-  FridaMobileDeviceInfo * mdev;
+  TelcoMobileDeviceInfo * mdev;
 
-  mdev = g_new (FridaMobileDeviceInfo, 1);
+  mdev = g_new (TelcoMobileDeviceInfo, 1);
   mdev->location = location;
 
   return mdev;
 }
 
 void
-frida_mobile_device_info_free (FridaMobileDeviceInfo * mdev)
+telco_mobile_device_info_free (TelcoMobileDeviceInfo * mdev)
 {
   if (mdev == NULL)
     return;
@@ -257,12 +257,12 @@ frida_mobile_device_info_free (FridaMobileDeviceInfo * mdev)
   g_free (mdev);
 }
 
-FridaImageDeviceInfo *
-frida_image_device_info_new (WCHAR * friendly_name, WCHAR * icon_url)
+TelcoImageDeviceInfo *
+telco_image_device_info_new (WCHAR * friendly_name, WCHAR * icon_url)
 {
-  FridaImageDeviceInfo * idev;
+  TelcoImageDeviceInfo * idev;
 
-  idev = g_new (FridaImageDeviceInfo, 1);
+  idev = g_new (TelcoImageDeviceInfo, 1);
   idev->friendly_name = friendly_name;
   idev->icon_url = icon_url;
 
@@ -270,7 +270,7 @@ frida_image_device_info_new (WCHAR * friendly_name, WCHAR * icon_url)
 }
 
 void
-frida_image_device_info_free (FridaImageDeviceInfo * idev)
+telco_image_device_info_free (TelcoImageDeviceInfo * idev)
 {
   if (idev == NULL)
     return;
@@ -281,7 +281,7 @@ frida_image_device_info_free (FridaImageDeviceInfo * idev)
 }
 
 static void
-frida_foreach_usb_device (const GUID * guid, FridaEnumerateDeviceFunc func, gpointer user_data)
+telco_foreach_usb_device (const GUID * guid, TelcoEnumerateDeviceFunc func, gpointer user_data)
 {
   HANDLE info_set;
   gboolean carry_on = TRUE;
@@ -298,7 +298,7 @@ frida_foreach_usb_device (const GUID * guid, FridaEnumerateDeviceFunc func, gpoi
     DWORD detail_size;
     SP_DEVICE_INTERFACE_DETAIL_DATA_W * detail_data = NULL;
     BOOL success;
-    FridaDeviceInfo device_info = { 0, };
+    TelcoDeviceInfo device_info = { 0, };
     DWORD instance_id_size;
 
     iface_data.cbSize = sizeof (iface_data);
@@ -327,9 +327,9 @@ frida_foreach_usb_device (const GUID * guid, FridaEnumerateDeviceFunc func, gpoi
     if (!success)
       goto skip_device;
 
-    device_info.friendly_name = frida_read_device_registry_string_property (info_set, &info_data, SPDRP_FRIENDLYNAME);
+    device_info.friendly_name = telco_read_device_registry_string_property (info_set, &info_data, SPDRP_FRIENDLYNAME);
 
-    device_info.location = frida_read_device_registry_string_property (info_set, &info_data, SPDRP_LOCATION_INFORMATION);
+    device_info.location = telco_read_device_registry_string_property (info_set, &info_data, SPDRP_LOCATION_INFORMATION);
     if (device_info.location == NULL)
       goto skip_device;
 
@@ -352,7 +352,7 @@ beach:
 }
 
 static WCHAR *
-frida_read_device_registry_string_property (HANDLE info_set, SP_DEVINFO_DATA * info_data, DWORD prop_id)
+telco_read_device_registry_string_property (HANDLE info_set, SP_DEVINFO_DATA * info_data, DWORD prop_id)
 {
   gboolean success = FALSE;
   WCHAR * value_buffer = NULL;
@@ -380,19 +380,19 @@ beach:
 }
 
 static WCHAR *
-frida_read_registry_string (HKEY key, WCHAR * value_name)
+telco_read_registry_string (HKEY key, WCHAR * value_name)
 {
-  return (WCHAR *) frida_read_registry_value (key, value_name, REG_SZ);
+  return (WCHAR *) telco_read_registry_value (key, value_name, REG_SZ);
 }
 
 static WCHAR *
-frida_read_registry_multi_string (HKEY key, WCHAR * value_name)
+telco_read_registry_multi_string (HKEY key, WCHAR * value_name)
 {
-  return (WCHAR *) frida_read_registry_value (key, value_name, REG_MULTI_SZ);
+  return (WCHAR *) telco_read_registry_value (key, value_name, REG_MULTI_SZ);
 }
 
 static gpointer
-frida_read_registry_value (HKEY key, WCHAR * value_name, DWORD expected_type)
+telco_read_registry_value (HKEY key, WCHAR * value_name, DWORD expected_type)
 {
   gboolean success = FALSE;
   DWORD type;

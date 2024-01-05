@@ -1,4 +1,4 @@
-#include "frida-core.h"
+#include "telco-core.h"
 
 #include "icon-helpers.h"
 
@@ -6,15 +6,15 @@
 
 #ifdef HAVE_MACOS
 
-typedef struct _FridaMacModel FridaMacModel;
+typedef struct _TelcoMacModel TelcoMacModel;
 
-struct _FridaMacModel
+struct _TelcoMacModel
 {
   const gchar * name;
   const gchar * icon;
 };
 
-static const FridaMacModel mac_models[] =
+static const TelcoMacModel mac_models[] =
 {
   { NULL,         "com.apple.led-cinema-display-27" },
   { "MacBookAir", "com.apple.macbookair-11-unibody" },
@@ -28,13 +28,13 @@ static const FridaMacModel mac_models[] =
 #endif
 
 GVariant *
-_frida_darwin_host_session_provider_try_extract_icon (void)
+_telco_darwin_host_session_provider_try_extract_icon (void)
 {
 #ifdef HAVE_MACOS
   GVariant * icon;
   size_t size;
   gchar * model_name;
-  const FridaMacModel * model;
+  const TelcoMacModel * model;
   guint i;
   gchar * filename;
 
@@ -52,7 +52,7 @@ _frida_darwin_host_session_provider_try_extract_icon (void)
     model = &mac_models[0];
 
   filename = g_strconcat ("/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/", model->icon, ".icns", NULL);
-  icon = _frida_icon_from_file (filename, 16, 16);
+  icon = _telco_icon_from_file (filename, 16, 16);
   g_free (filename);
 
   g_free (model_name);

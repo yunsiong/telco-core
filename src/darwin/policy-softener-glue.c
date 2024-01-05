@@ -1,4 +1,4 @@
-#include "frida-helper-backend.h"
+#include "telco-helper-backend.h"
 
 #if defined (HAVE_IOS) || defined (HAVE_TVOS)
 # include "policyd.h"
@@ -17,7 +17,7 @@ typedef int (* JbdCallFunc) (mach_port_t service_port, guint command, guint pid)
 extern kern_return_t bootstrap_look_up (mach_port_t bootstrap_port, char * service_name, mach_port_t * service_port);
 
 void
-_frida_internal_iostvos_policy_softener_soften (guint pid,
+_telco_internal_iostvos_policy_softener_soften (guint pid,
                                                 GError ** error)
 {
   static mach_port_t service_port = MACH_PORT_NULL;
@@ -26,12 +26,12 @@ _frida_internal_iostvos_policy_softener_soften (guint pid,
 
   if (service_port == MACH_PORT_NULL)
   {
-    kr = bootstrap_look_up (bootstrap_port, FRIDA_POLICYD_SERVICE_NAME, &service_port);
+    kr = bootstrap_look_up (bootstrap_port, TELCO_POLICYD_SERVICE_NAME, &service_port);
     if (kr != KERN_SUCCESS)
       goto service_not_available;
   }
 
-  kr = frida_policyd_soften (service_port, pid, &error_code);
+  kr = telco_policyd_soften (service_port, pid, &error_code);
   if (kr != KERN_SUCCESS)
     goto service_crashed;
 
@@ -43,8 +43,8 @@ _frida_internal_iostvos_policy_softener_soften (guint pid,
 service_not_available:
   {
     g_set_error (error,
-        FRIDA_ERROR,
-        FRIDA_ERROR_NOT_SUPPORTED,
+        TELCO_ERROR,
+        TELCO_ERROR_NOT_SUPPORTED,
         "Policy daemon is not running");
 
     return;
@@ -55,8 +55,8 @@ service_crashed:
     service_port = MACH_PORT_NULL;
 
     g_set_error (error,
-        FRIDA_ERROR,
-        FRIDA_ERROR_NOT_SUPPORTED,
+        TELCO_ERROR,
+        TELCO_ERROR_NOT_SUPPORTED,
         "Policy daemon has crashed");
 
     return;
@@ -66,15 +66,15 @@ softening_failed:
     if (error_code == ESRCH)
     {
       g_set_error (error,
-          FRIDA_ERROR,
-          FRIDA_ERROR_PROCESS_NOT_FOUND,
+          TELCO_ERROR,
+          TELCO_ERROR_PROCESS_NOT_FOUND,
           "No such process");
     }
     else
     {
       g_set_error (error,
-          FRIDA_ERROR,
-          FRIDA_ERROR_PERMISSION_DENIED,
+          TELCO_ERROR,
+          TELCO_ERROR_PERMISSION_DENIED,
           "%s while attempting to soften target process",
           g_strerror (error_code));
     }
@@ -84,7 +84,7 @@ softening_failed:
 }
 
 guint
-_frida_electra_policy_softener_internal_jb_connect (void)
+_telco_electra_policy_softener_internal_jb_connect (void)
 {
   mach_port_t service_port = MACH_PORT_NULL;
   kern_return_t kr;
@@ -97,13 +97,13 @@ _frida_electra_policy_softener_internal_jb_connect (void)
 }
 
 void
-_frida_electra_policy_softener_internal_jb_disconnect (guint service_port)
+_telco_electra_policy_softener_internal_jb_disconnect (guint service_port)
 {
   mach_port_deallocate (mach_task_self (), service_port);
 }
 
 gint
-_frida_electra_policy_softener_internal_jb_entitle_now (void * jbd_call, guint service_port, guint pid)
+_telco_electra_policy_softener_internal_jb_entitle_now (void * jbd_call, guint service_port, guint pid)
 {
   JbdCallFunc jbd_call_func = jbd_call;
 
@@ -111,7 +111,7 @@ _frida_electra_policy_softener_internal_jb_entitle_now (void * jbd_call, guint s
 }
 
 guint
-_frida_unc0ver_policy_softener_internal_connect (void)
+_telco_unc0ver_policy_softener_internal_connect (void)
 {
   mach_port_t service_port = MACH_PORT_NULL;
   kern_return_t kr;
@@ -124,13 +124,13 @@ _frida_unc0ver_policy_softener_internal_connect (void)
 }
 
 void
-_frida_unc0ver_policy_softener_internal_disconnect (guint service_port)
+_telco_unc0ver_policy_softener_internal_disconnect (guint service_port)
 {
   mach_port_deallocate (mach_task_self (), service_port);
 }
 
 void
-_frida_unc0ver_policy_softener_internal_substitute_setup_process (guint service_port, guint pid)
+_telco_unc0ver_policy_softener_internal_substitute_setup_process (guint service_port, guint pid)
 {
   kern_return_t kr;
   static gboolean using_new_substituted = FALSE;
@@ -141,7 +141,7 @@ _frida_unc0ver_policy_softener_internal_substitute_setup_process (guint service_
   /*
    * DISCLAIMER:
    * Don't do this at home. This is not recommended outside of the
-   * Frida use case and may change in the future. Instead, just
+   * Telco use case and may change in the future. Instead, just
    * drop your stuff in /Library/MobileSubstrate/DynamicLibraries
    */
 

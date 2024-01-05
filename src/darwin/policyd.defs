@@ -10,12 +10,12 @@
  *     policyd.defs
  */
 
-subsystem frida_policyd 42000;
+subsystem telco_policyd 42000;
 
 #include <mach/std_types.defs>
 #include <mach/mach_types.defs>
 
-routine frida_policyd_soften(
+routine telco_policyd_soften(
 		server		: mach_port_t;
 	in	pid		: int;
 	out	error_code	: int);

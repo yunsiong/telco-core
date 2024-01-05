@@ -18,19 +18,19 @@ static HWND find_main_window_of_pid (DWORD pid);
 static BOOL CALLBACK inspect_window (HWND hwnd, LPARAM lparam);
 
 GVariant *
-_frida_icon_from_process_or_file (DWORD pid, WCHAR * filename, FridaIconSize size)
+_telco_icon_from_process_or_file (DWORD pid, WCHAR * filename, TelcoIconSize size)
 {
   GVariant * icon;
 
-  icon = _frida_icon_from_process (pid, size);
+  icon = _telco_icon_from_process (pid, size);
   if (icon == NULL)
-    icon = _frida_icon_from_file (filename, size);
+    icon = _telco_icon_from_file (filename, size);
 
   return icon;
 }
 
 GVariant *
-_frida_icon_from_process (DWORD pid, FridaIconSize size)
+_telco_icon_from_process (DWORD pid, TelcoIconSize size)
 {
   GVariant * result = NULL;
   HICON icon = NULL;
@@ -44,7 +44,7 @@ _frida_icon_from_process (DWORD pid, FridaIconSize size)
     flags = SMTO_ABORTIFHUNG | SMTO_BLOCK;
     timeout = 100;
 
-    if (size == FRIDA_ICON_SMALL)
+    if (size == TELCO_ICON_SMALL)
     {
       SendMessageTimeout (main_window, WM_GETICON, ICON_SMALL2, 0,
           flags, timeout, (PDWORD_PTR) &icon);
@@ -58,7 +58,7 @@ _frida_icon_from_process (DWORD pid, FridaIconSize size)
       if (icon == NULL)
         icon = (HICON) GetClassLongPtr (main_window, GCLP_HICONSM);
     }
-    else if (size == FRIDA_ICON_LARGE)
+    else if (size == TELCO_ICON_LARGE)
     {
       SendMessageTimeout (main_window, WM_GETICON, ICON_BIG, 0,
           flags, timeout, (PDWORD_PTR) &icon);
@@ -79,22 +79,22 @@ _frida_icon_from_process (DWORD pid, FridaIconSize size)
   }
 
   if (icon != NULL)
-    result = _frida_icon_from_native_icon_handle (icon, size);
+    result = _telco_icon_from_native_icon_handle (icon, size);
 
   return result;
 }
 
 GVariant *
-_frida_icon_from_file (WCHAR * filename, FridaIconSize size)
+_telco_icon_from_file (WCHAR * filename, TelcoIconSize size)
 {
   GVariant * result = NULL;
   SHFILEINFOW shfi = { 0, };
   UINT flags;
 
   flags = SHGFI_ICON;
-  if (size == FRIDA_ICON_SMALL)
+  if (size == TELCO_ICON_SMALL)
     flags |= SHGFI_SMALLICON;
-  else if (size == FRIDA_ICON_LARGE)
+  else if (size == TELCO_ICON_LARGE)
     flags |= SHGFI_LARGEICON;
   else
     g_assert_not_reached ();
@@ -102,7 +102,7 @@ _frida_icon_from_file (WCHAR * filename, FridaIconSize size)
   SHGetFileInfoW (filename, 0, &shfi, sizeof (shfi), flags);
   if (shfi.hIcon != NULL)
   {
-    result = _frida_icon_from_native_icon_handle (shfi.hIcon, size);
+    result = _telco_icon_from_native_icon_handle (shfi.hIcon, size);
 
     DestroyIcon (shfi.hIcon);
   }
@@ -111,7 +111,7 @@ _frida_icon_from_file (WCHAR * filename, FridaIconSize size)
 }
 
 GVariant *
-_frida_icon_from_resource_url (WCHAR * resource_url, FridaIconSize size)
+_telco_icon_from_resource_url (WCHAR * resource_url, TelcoIconSize size)
 {
   static gboolean api_initialized = FALSE;
   static Wow64DisableWow64FsRedirectionFunc Wow64DisableWow64FsRedirectionImpl = NULL;
@@ -156,7 +156,7 @@ _frida_icon_from_resource_url (WCHAR * resource_url, FridaIconSize size)
   if (Wow64DisableWow64FsRedirectionImpl != NULL)
     Wow64DisableWow64FsRedirectionImpl (&old_redirection_value);
 
-  ret = ExtractIconExW (resource_file, resource_id, (size == FRIDA_ICON_LARGE) ? &icon : NULL, (size == FRIDA_ICON_SMALL) ? &icon : NULL, 1);
+  ret = ExtractIconExW (resource_file, resource_id, (size == TELCO_ICON_LARGE) ? &icon : NULL, (size == TELCO_ICON_SMALL) ? &icon : NULL, 1);
 
   if (Wow64RevertWow64FsRedirectionImpl != NULL)
     Wow64RevertWow64FsRedirectionImpl (old_redirection_value);
@@ -164,7 +164,7 @@ _frida_icon_from_resource_url (WCHAR * resource_url, FridaIconSize size)
   if (ret != 1)
     goto beach;
 
-  result = _frida_icon_from_native_icon_handle (icon, size);
+  result = _telco_icon_from_native_icon_handle (icon, size);
 
 beach:
   if (icon != NULL)
@@ -175,7 +175,7 @@ beach:
 }
 
 GVariant *
-_frida_icon_from_native_icon_handle (HICON icon, FridaIconSize size)
+_telco_icon_from_native_icon_handle (HICON icon, TelcoIconSize size)
 {
   GVariant * result;
   HDC dc;
@@ -189,12 +189,12 @@ _frida_icon_from_native_icon_handle (HICON icon, FridaIconSize size)
 
   dc = CreateCompatibleDC (NULL);
 
-  if (size == FRIDA_ICON_SMALL)
+  if (size == TELCO_ICON_SMALL)
   {
     width = GetSystemMetrics (SM_CXSMICON);
     height = GetSystemMetrics (SM_CYSMICON);
   }
-  else if (size == FRIDA_ICON_LARGE)
+  else if (size == TELCO_ICON_LARGE)
   {
     width = GetSystemMetrics (SM_CXICON);
     height = GetSystemMetrics (SM_CYICON);

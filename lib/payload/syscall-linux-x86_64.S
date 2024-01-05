@@ -27,10 +27,10 @@
  * SUCH DAMAGE.
  */
 
-#define frida_asm_align 16
-#define frida_asm_custom_entry(f)
-#define frida_asm_custom_end(f)
-#define frida_asm_function_type @function
+#define telco_asm_align 16
+#define telco_asm_custom_entry(f)
+#define telco_asm_custom_end(f)
+#define telco_asm_function_type @function
 
 #include "syscall-linux.h"
 
@@ -59,11 +59,11 @@ ENTRY_PRIVATE(syscall)
 
   # Make the system call.
   syscall
-  cmpq    $-FRIDA_MAX_ERRNO, %rax
+  cmpq    $-TELCO_MAX_ERRNO, %rax
   jb      1f
   negl    %eax
   movl    %eax, %edi
-  call    _frida_set_errno
+  call    _telco_set_errno
 1:
   ret
 END(syscall)

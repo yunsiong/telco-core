@@ -1,14 +1,14 @@
-FRIDA_MONOREPO ?= ../../../..
+TELCO_MONOREPO ?= ../../../..
 
-ifdef FRIDA_HOST
-host_os := $(shell echo $(FRIDA_HOST) | cut -f1 -d"-")
-host_arch := $(shell echo $(FRIDA_HOST) | cut -f2 -d"-")
+ifdef TELCO_HOST
+host_os := $(shell echo $(TELCO_HOST) | cut -f1 -d"-")
+host_arch := $(shell echo $(TELCO_HOST) | cut -f2 -d"-")
 else
-host_os := $(shell $(FRIDA_MONOREPO)/releng/detect-os.sh)
-host_arch := $(shell $(FRIDA_MONOREPO)/releng/detect-arch.sh)
+host_os := $(shell $(TELCO_MONOREPO)/releng/detect-os.sh)
+host_arch := $(shell $(TELCO_MONOREPO)/releng/detect-arch.sh)
 endif
 
-build: $(FRIDA_MONOREPO)/build/frida*-$(host_os)-$(host_arch).txt ext/linux/tools/include/nolibc/nolibc.h
+build: $(TELCO_MONOREPO)/build/telco*-$(host_os)-$(host_arch).txt ext/linux/tools/include/nolibc/nolibc.h
 	rm -rf build
 	meson setup --cross-file $< -Db_lto=true build
 	meson compile -C build

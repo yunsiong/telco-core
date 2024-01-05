@@ -1,4 +1,4 @@
-const { init, build, watch } = FridaCompilerAgentCore;
+const { init, build, watch } = TelcoCompilerAgentCore;
 
 init();
 

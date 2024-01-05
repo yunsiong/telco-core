@@ -1,4 +1,4 @@
-#include "frida-core.h"
+#include "telco-core.h"
 
 #include <gio/gunixinputstream.h>
 #include <gum/arch-arm/gumarmwriter.h>
@@ -60,23 +60,23 @@ enum {
     goto os_failure; \
   }
 
-#define FRIDA_REMOTE_PAYLOAD_SIZE (8192)
-#define FRIDA_REMOTE_DATA_OFFSET (512)
-#define FRIDA_REMOTE_STACK_OFFSET (FRIDA_REMOTE_PAYLOAD_SIZE - 512)
-#define FRIDA_REMOTE_DATA_FIELD(n) \
-    remote_address + FRIDA_REMOTE_DATA_OFFSET + G_STRUCT_OFFSET (FridaTrampolineData, n)
+#define TELCO_REMOTE_PAYLOAD_SIZE (8192)
+#define TELCO_REMOTE_DATA_OFFSET (512)
+#define TELCO_REMOTE_STACK_OFFSET (TELCO_REMOTE_PAYLOAD_SIZE - 512)
+#define TELCO_REMOTE_DATA_FIELD(n) \
+    remote_address + TELCO_REMOTE_DATA_OFFSET + G_STRUCT_OFFSET (TelcoTrampolineData, n)
 
-typedef struct _FridaInjectionInstance FridaInjectionInstance;
-typedef struct _FridaInjectionParams FridaInjectionParams;
-typedef struct _FridaCodeChunk FridaCodeChunk;
-typedef struct _FridaTrampolineData FridaTrampolineData;
-typedef struct _FridaFindLandingStripContext FridaFindLandingStripContext;
+typedef struct _TelcoInjectionInstance TelcoInjectionInstance;
+typedef struct _TelcoInjectionParams TelcoInjectionParams;
+typedef struct _TelcoCodeChunk TelcoCodeChunk;
+typedef struct _TelcoTrampolineData TelcoTrampolineData;
+typedef struct _TelcoFindLandingStripContext TelcoFindLandingStripContext;
 
-typedef void (* FridaEmitFunc) (const FridaInjectionParams * params, GumAddress remote_address, FridaCodeChunk * code);
+typedef void (* TelcoEmitFunc) (const TelcoInjectionParams * params, GumAddress remote_address, TelcoCodeChunk * code);
 
-struct _FridaInjectionInstance
+struct _TelcoInjectionInstance
 {
-  FridaQinjector * qinjector;
+  TelcoQinjector * qinjector;
   guint id;
   pid_t pid;
   gboolean already_attached;
@@ -84,7 +84,7 @@ struct _FridaInjectionInstance
   GumAddress remote_payload;
 };
 
-struct _FridaInjectionParams
+struct _TelcoInjectionParams
 {
   pid_t pid;
   const gchar * so_path;
@@ -95,14 +95,14 @@ struct _FridaInjectionParams
   GumAddress remote_address;
 };
 
-struct _FridaCodeChunk
+struct _TelcoCodeChunk
 {
   guint8 * cur;
   gsize size;
   guint8 bytes[2048];
 };
 
-struct _FridaTrampolineData
+struct _TelcoTrampolineData
 {
   gchar so_path[256];
   gchar entrypoint_name[256];
@@ -112,35 +112,35 @@ struct _FridaTrampolineData
   gpointer module_handle;
 };
 
-struct _FridaFindLandingStripContext
+struct _TelcoFindLandingStripContext
 {
   pid_t pid;
   GumAddress result;
 };
 
-static gboolean frida_emit_and_remote_execute (FridaEmitFunc func, const FridaInjectionParams * params, GumAddress * result, GError ** error);
+static gboolean telco_emit_and_remote_execute (TelcoEmitFunc func, const TelcoInjectionParams * params, GumAddress * result, GError ** error);
 
-static void frida_emit_payload_code (const FridaInjectionParams * params, GumAddress remote_address, FridaCodeChunk * code);
+static void telco_emit_payload_code (const TelcoInjectionParams * params, GumAddress remote_address, TelcoCodeChunk * code);
 
-static GumAddress frida_remote_alloc (pid_t pid, size_t size, int prot, GError ** error);
-static int frida_remote_dealloc (pid_t pid, GumAddress address, size_t size, GError ** error);
-static int frida_remote_pthread_create (pid_t pid, GumAddress address, GError ** error);
-static int frida_remote_msync (pid_t pid, GumAddress remote_address, gint size, gint flags, GError ** error);
-static gboolean frida_remote_write (pid_t pid, GumAddress remote_address, gconstpointer data, gsize size, GError ** error);
-static gboolean frida_remote_write_fd (gint fd, GumAddress remote_address, gconstpointer data, gsize size, GError ** error);
-static gboolean frida_remote_call (pid_t pid, GumAddress func, const GumAddress * args, gint args_length, GumAddress * retval, GError ** error);
+static GumAddress telco_remote_alloc (pid_t pid, size_t size, int prot, GError ** error);
+static int telco_remote_dealloc (pid_t pid, GumAddress address, size_t size, GError ** error);
+static int telco_remote_pthread_create (pid_t pid, GumAddress address, GError ** error);
+static int telco_remote_msync (pid_t pid, GumAddress remote_address, gint size, gint flags, GError ** error);
+static gboolean telco_remote_write (pid_t pid, GumAddress remote_address, gconstpointer data, gsize size, GError ** error);
+static gboolean telco_remote_write_fd (gint fd, GumAddress remote_address, gconstpointer data, gsize size, GError ** error);
+static gboolean telco_remote_call (pid_t pid, GumAddress func, const GumAddress * args, gint args_length, GumAddress * retval, GError ** error);
 
-static GumAddress frida_resolve_remote_libc_function (int remote_pid, const gchar * function_name);
+static GumAddress telco_resolve_remote_libc_function (int remote_pid, const gchar * function_name);
 
-static GumAddress frida_resolve_remote_library_function (int remote_pid, const gchar * library_name, const gchar * function_name);
-static GumAddress frida_find_library_base (pid_t pid, const gchar * library_name, gchar ** library_path);
+static GumAddress telco_resolve_remote_library_function (int remote_pid, const gchar * library_name, const gchar * function_name);
+static GumAddress telco_find_library_base (pid_t pid, const gchar * library_name, gchar ** library_path);
 
-static FridaInjectionInstance *
-frida_injection_instance_new (FridaQinjector * qinjector, guint id, pid_t pid, const char * temp_path)
+static TelcoInjectionInstance *
+telco_injection_instance_new (TelcoQinjector * qinjector, guint id, pid_t pid, const char * temp_path)
 {
-  FridaInjectionInstance * instance;
+  TelcoInjectionInstance * instance;
 
-  instance = g_slice_new0 (FridaInjectionInstance);
+  instance = g_slice_new0 (TelcoInjectionInstance);
   instance->qinjector = g_object_ref (qinjector);
   instance->id = id;
   instance->pid = pid;
@@ -152,26 +152,26 @@ frida_injection_instance_new (FridaQinjector * qinjector, guint id, pid_t pid, c
 }
 
 static void
-frida_injection_instance_free (FridaInjectionInstance * instance, FridaUnloadPolicy unload_policy)
+telco_injection_instance_free (TelcoInjectionInstance * instance, TelcoUnloadPolicy unload_policy)
 {
-  if (instance->remote_payload != 0 && unload_policy == FRIDA_UNLOAD_POLICY_IMMEDIATE)
+  if (instance->remote_payload != 0 && unload_policy == TELCO_UNLOAD_POLICY_IMMEDIATE)
   {
     GError * error = NULL;
 
-    frida_remote_dealloc (instance->pid, instance->remote_payload, FRIDA_REMOTE_PAYLOAD_SIZE, &error);
+    telco_remote_dealloc (instance->pid, instance->remote_payload, TELCO_REMOTE_PAYLOAD_SIZE, &error);
 
     g_clear_error (&error);
   }
 
   ChannelDestroy_r (instance->channel_id);
   g_object_unref (instance->qinjector);
-  g_slice_free (FridaInjectionInstance, instance);
+  g_slice_free (TelcoInjectionInstance, instance);
 }
 
 void
-_frida_remote_thread_session_receive_pulse (void * opaque_instance, FridaQnxPulseCode * code, gint * val, GError ** error)
+_telco_remote_thread_session_receive_pulse (void * opaque_instance, TelcoQnxPulseCode * code, gint * val, GError ** error)
 {
-  FridaInjectionInstance * instance = opaque_instance;
+  TelcoInjectionInstance * instance = opaque_instance;
   int res;
   struct _pulse pulse;
 
@@ -187,8 +187,8 @@ _frida_remote_thread_session_receive_pulse (void * opaque_instance, FridaQnxPuls
 failure:
   {
     g_set_error (error,
-        FRIDA_ERROR,
-        FRIDA_ERROR_INVALID_OPERATION,
+        TELCO_ERROR,
+        TELCO_ERROR_INVALID_OPERATION,
         "Unable to receive pulse: %s",
         strerror (-res));
     return;
@@ -196,7 +196,7 @@ failure:
 }
 
 gboolean
-_frida_remote_thread_session_thread_is_alive (guint pid, guint tid)
+_telco_remote_thread_session_thread_is_alive (guint pid, guint tid)
 {
   gboolean alive = FALSE;
   gchar * path;
@@ -225,27 +225,27 @@ beach:
 }
 
 void
-_frida_qinjector_free_instance (FridaQinjector * self, void * instance, FridaUnloadPolicy unload_policy)
+_telco_qinjector_free_instance (TelcoQinjector * self, void * instance, TelcoUnloadPolicy unload_policy)
 {
-  frida_injection_instance_free (instance, unload_policy);
+  telco_injection_instance_free (instance, unload_policy);
 }
 
 guint
-_frida_qinjector_do_inject (FridaQinjector * self, guint pid, const gchar * path, const gchar * entrypoint, const gchar * data,
+_telco_qinjector_do_inject (TelcoQinjector * self, guint pid, const gchar * path, const gchar * entrypoint, const gchar * data,
     const gchar * temp_path, GError ** error)
 {
-  FridaInjectionInstance * instance;
-  FridaInjectionParams params = { pid, path, entrypoint, data };
+  TelcoInjectionInstance * instance;
+  TelcoInjectionParams params = { pid, path, entrypoint, data };
 
-  instance = frida_injection_instance_new (self, self->next_instance_id++, pid, temp_path);
+  instance = telco_injection_instance_new (self, self->next_instance_id++, pid, temp_path);
 
   params.channel_id = instance->channel_id;
-  params.remote_address = frida_remote_alloc (pid, FRIDA_REMOTE_PAYLOAD_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, error);
+  params.remote_address = telco_remote_alloc (pid, TELCO_REMOTE_PAYLOAD_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, error);
   if (params.remote_address == 0)
     goto beach;
   instance->remote_payload = params.remote_address;
 
-  if (!frida_emit_and_remote_execute (frida_emit_payload_code, &params, NULL, error))
+  if (!telco_emit_and_remote_execute (telco_emit_payload_code, &params, NULL, error))
     goto beach;
 
   gee_abstract_map_set (GEE_ABSTRACT_MAP (self->instances), GUINT_TO_POINTER (instance->id), instance);
@@ -254,41 +254,41 @@ _frida_qinjector_do_inject (FridaQinjector * self, guint pid, const gchar * path
 
 beach:
   {
-    frida_injection_instance_free (instance, FRIDA_UNLOAD_POLICY_IMMEDIATE);
+    telco_injection_instance_free (instance, TELCO_UNLOAD_POLICY_IMMEDIATE);
     return 0;
   }
 }
 
 static gboolean
-frida_emit_and_remote_execute (FridaEmitFunc func, const FridaInjectionParams * params, GumAddress * result,
+telco_emit_and_remote_execute (TelcoEmitFunc func, const TelcoInjectionParams * params, GumAddress * result,
     GError ** error)
 {
-  FridaCodeChunk code;
-  FridaTrampolineData * data;
+  TelcoCodeChunk code;
+  TelcoTrampolineData * data;
 
   code.cur = code.bytes;
   code.size = 0;
 
   func (params, GUM_ADDRESS (params->remote_address), &code);
 
-  data = (FridaTrampolineData *) (code.bytes + FRIDA_REMOTE_DATA_OFFSET);
+  data = (TelcoTrampolineData *) (code.bytes + TELCO_REMOTE_DATA_OFFSET);
   strcpy (data->so_path, params->so_path);
   strcpy (data->entrypoint_name, params->entrypoint_name);
   strcpy (data->entrypoint_data, params->entrypoint_data);
   data->worker_thread = 0;
   data->module_handle = NULL;
 
-  if (!frida_remote_write (params->pid, params->remote_address, code.bytes, FRIDA_REMOTE_DATA_OFFSET + sizeof (FridaTrampolineData), error))
+  if (!telco_remote_write (params->pid, params->remote_address, code.bytes, TELCO_REMOTE_DATA_OFFSET + sizeof (TelcoTrampolineData), error))
     return FALSE;
 
   /*
    * We need to flush the data cache and invalidate the instruction cache before
    * trying to run the generated code.
    */
-  if (frida_remote_msync (params->pid, params->remote_address, FRIDA_REMOTE_PAYLOAD_SIZE, MS_INVALIDATE_ICACHE, error) != 0)
+  if (telco_remote_msync (params->pid, params->remote_address, TELCO_REMOTE_PAYLOAD_SIZE, MS_INVALIDATE_ICACHE, error) != 0)
     return FALSE;
 
-  if (frida_remote_pthread_create (params->pid, params->remote_address, error) != 0)
+  if (telco_remote_pthread_create (params->pid, params->remote_address, error) != 0)
     return FALSE;
 
   return TRUE;
@@ -299,10 +299,10 @@ frida_emit_and_remote_execute (FridaEmitFunc func, const FridaInjectionParams * 
 #define EMIT_ADD(dst, src, offset) \
     gum_arm_writer_put_add_reg_reg_imm (&cw, ARM_REG_##dst, ARM_REG_##src, offset)
 #define EMIT_LOAD_FIELD(reg, field) \
-    gum_arm_writer_put_ldr_reg_address (&cw, ARM_REG_##reg, FRIDA_REMOTE_DATA_FIELD (field)); \
+    gum_arm_writer_put_ldr_reg_address (&cw, ARM_REG_##reg, TELCO_REMOTE_DATA_FIELD (field)); \
     EMIT_LDR (reg, reg)
 #define EMIT_STORE_FIELD(field, reg) \
-    gum_arm_writer_put_ldr_reg_address (&cw, ARM_REG_R0, FRIDA_REMOTE_DATA_FIELD (field)); \
+    gum_arm_writer_put_ldr_reg_address (&cw, ARM_REG_R0, TELCO_REMOTE_DATA_FIELD (field)); \
     gum_arm_writer_put_str_reg_reg_offset (&cw, ARM_REG_##reg, ARM_REG_R0, 0)
 #define EMIT_LDR(dst, src) \
     gum_arm_writer_put_ldr_reg_reg_offset (&cw, ARM_REG_##dst, ARM_REG_##src, 0)
@@ -325,7 +325,7 @@ frida_emit_and_remote_execute (FridaEmitFunc func, const FridaInjectionParams * 
     GUM_ARG_REGISTER, ARM_REG_##reg
 
 static void
-frida_emit_payload_code (const FridaInjectionParams * params, GumAddress remote_address, FridaCodeChunk * code)
+telco_emit_payload_code (const TelcoInjectionParams * params, GumAddress remote_address, TelcoCodeChunk * code)
 {
   GumArmWriter cw;
   const gchar * skip_dlopen = "skip_dlopen";
@@ -336,7 +336,7 @@ frida_emit_payload_code (const FridaInjectionParams * params, GumAddress remote_
 
   gum_arm_writer_put_push_regs (&cw, 4, ARM_REG_R5, ARM_REG_R6, ARM_REG_R7, ARM_REG_LR);
 
-  EMIT_CALL_IMM (frida_resolve_remote_libc_function (params->pid, "ConnectAttach_r"),
+  EMIT_CALL_IMM (telco_resolve_remote_libc_function (params->pid, "ConnectAttach_r"),
       5,
       ARG_IMM (ND_LOCAL_NODE),
       ARG_IMM (getpid ()),
@@ -345,75 +345,75 @@ frida_emit_payload_code (const FridaInjectionParams * params, GumAddress remote_
       ARG_IMM (_NTO_COF_CLOEXEC));
   EMIT_MOVE (R7, R0);
 
-  gum_arm_writer_put_call_address_with_arguments (&cw, frida_resolve_remote_libc_function (params->pid, "gettid"), 0);
+  gum_arm_writer_put_call_address_with_arguments (&cw, telco_resolve_remote_libc_function (params->pid, "gettid"), 0);
   EMIT_MOVE (R3, R0);
 
-  EMIT_CALL_IMM (frida_resolve_remote_libc_function (params->pid, "MsgSendPulse_r"),
+  EMIT_CALL_IMM (telco_resolve_remote_libc_function (params->pid, "MsgSendPulse_r"),
       4,
       ARG_REG (R7),
       ARG_IMM (-1),
-      ARG_IMM (FRIDA_QNX_PULSE_CODE_HELLO),
+      ARG_IMM (TELCO_QNX_PULSE_CODE_HELLO),
       ARG_REG (R3));
 
   EMIT_LOAD_FIELD (R6, module_handle);
   EMIT_CMP (R6, 0);
   EMIT_B_COND (NE, skip_dlopen);
   {
-    EMIT_CALL_IMM (frida_resolve_remote_libc_function (params->pid, "dlopen"),
+    EMIT_CALL_IMM (telco_resolve_remote_libc_function (params->pid, "dlopen"),
         2,
-        ARG_IMM (FRIDA_REMOTE_DATA_FIELD (so_path)),
+        ARG_IMM (TELCO_REMOTE_DATA_FIELD (so_path)),
         ARG_IMM (RTLD_LAZY));
     EMIT_MOVE (R6, R0);
     EMIT_STORE_FIELD (module_handle, R6);
   }
   EMIT_LABEL (skip_dlopen);
 
-  EMIT_CALL_IMM (frida_resolve_remote_libc_function (params->pid, "dlsym"),
+  EMIT_CALL_IMM (telco_resolve_remote_libc_function (params->pid, "dlsym"),
       2,
       ARG_REG (R6),
-      ARG_IMM (FRIDA_REMOTE_DATA_FIELD (entrypoint_name)));
+      ARG_IMM (TELCO_REMOTE_DATA_FIELD (entrypoint_name)));
   gum_arm_writer_put_mov_reg_reg (&cw, ARM_REG_R5, ARM_REG_R0);
 
-  EMIT_LDR_U32 (R0, FRIDA_UNLOAD_POLICY_IMMEDIATE);
+  EMIT_LDR_U32 (R0, TELCO_UNLOAD_POLICY_IMMEDIATE);
   gum_arm_writer_put_push_regs (&cw, 2, ARM_REG_R0, ARM_REG_R7);
   EMIT_MOVE (R1, SP);
   EMIT_ADD (R2, SP, 4);
   EMIT_CALL_REG (R5,
       3,
-      ARG_IMM (FRIDA_REMOTE_DATA_FIELD (entrypoint_data)),
+      ARG_IMM (TELCO_REMOTE_DATA_FIELD (entrypoint_data)),
       ARG_REG (R1),
       ARG_REG (R2));
 
   EMIT_LDR (R0, SP);
-  EMIT_CMP (R0, FRIDA_UNLOAD_POLICY_IMMEDIATE);
+  EMIT_CMP (R0, TELCO_UNLOAD_POLICY_IMMEDIATE);
   EMIT_B_COND (NE, skip_dlclose);
   {
-    EMIT_CALL_IMM (frida_resolve_remote_libc_function (params->pid, "dlclose"),
+    EMIT_CALL_IMM (telco_resolve_remote_libc_function (params->pid, "dlclose"),
         1,
         ARG_REG (R6));
   }
   EMIT_LABEL (skip_dlclose);
 
   EMIT_LDR (R0, SP);
-  EMIT_CMP (R0, FRIDA_UNLOAD_POLICY_DEFERRED);
+  EMIT_CMP (R0, TELCO_UNLOAD_POLICY_DEFERRED);
   EMIT_B_COND (EQ, skip_detach);
   {
     EMIT_LOAD_FIELD (R0, worker_thread);
-    EMIT_CALL_IMM (frida_resolve_remote_libc_function (params->pid, "pthread_detach"),
+    EMIT_CALL_IMM (telco_resolve_remote_libc_function (params->pid, "pthread_detach"),
         1,
         ARG_REG (R0));
   }
   EMIT_LABEL (skip_detach);
 
   EMIT_LDR (R3, SP);
-  EMIT_CALL_IMM (frida_resolve_remote_libc_function (params->pid, "MsgSendPulse_r"),
+  EMIT_CALL_IMM (telco_resolve_remote_libc_function (params->pid, "MsgSendPulse_r"),
       4,
       ARG_REG (R7),
       ARG_IMM (-1),
-      ARG_IMM (FRIDA_QNX_PULSE_CODE_BYE),
+      ARG_IMM (TELCO_QNX_PULSE_CODE_BYE),
       ARG_REG (R3));
 
-  EMIT_CALL_IMM (frida_resolve_remote_libc_function (params->pid, "ConnectDetach_r"),
+  EMIT_CALL_IMM (telco_resolve_remote_libc_function (params->pid, "ConnectDetach_r"),
       1,
       ARG_REG (R7));
 
@@ -428,7 +428,7 @@ frida_emit_payload_code (const FridaInjectionParams * params, GumAddress remote_
 }
 
 static GumAddress
-frida_remote_alloc (pid_t pid, size_t size, int prot, GError ** error)
+telco_remote_alloc (pid_t pid, size_t size, int prot, GError ** error)
 {
   GumAddress args[] = {
     0,
@@ -439,7 +439,7 @@ frida_remote_alloc (pid_t pid, size_t size, int prot, GError ** error)
     0
   };
   GumAddress retval = 0;
-  GumAddress function = frida_resolve_remote_libc_function (pid, "mmap");
+  GumAddress function = telco_resolve_remote_libc_function (pid, "mmap");
 
   if (function == -1)
   {
@@ -447,7 +447,7 @@ frida_remote_alloc (pid_t pid, size_t size, int prot, GError ** error)
     return -1;
   }
 
-  if (!frida_remote_call (pid, function, args, G_N_ELEMENTS (args), &retval, error))
+  if (!telco_remote_call (pid, function, args, G_N_ELEMENTS (args), &retval, error))
     return 0;
 
   if (retval == G_GUINT64_CONSTANT (0xffffffffffffffff))
@@ -457,14 +457,14 @@ frida_remote_alloc (pid_t pid, size_t size, int prot, GError ** error)
 }
 
 static int
-frida_remote_dealloc (pid_t pid, GumAddress address, size_t size, GError ** error)
+telco_remote_dealloc (pid_t pid, GumAddress address, size_t size, GError ** error)
 {
   GumAddress args[] = {
     address,
     size
   };
   GumAddress retval;
-  GumAddress function = frida_resolve_remote_libc_function (pid, "munmap");
+  GumAddress function = telco_resolve_remote_libc_function (pid, "munmap");
 
   if (function == -1)
   {
@@ -472,23 +472,23 @@ frida_remote_dealloc (pid_t pid, GumAddress address, size_t size, GError ** erro
     return -1;
   }
 
-  if (!frida_remote_call (pid, function, args, G_N_ELEMENTS (args), &retval, error))
+  if (!telco_remote_call (pid, function, args, G_N_ELEMENTS (args), &retval, error))
     return -1;
 
   return retval;
 }
 
 static int
-frida_remote_pthread_create (pid_t pid, GumAddress remote_address, GError ** error)
+telco_remote_pthread_create (pid_t pid, GumAddress remote_address, GError ** error)
 {
   GumAddress args[] = {
-    FRIDA_REMOTE_DATA_FIELD (worker_thread),
+    TELCO_REMOTE_DATA_FIELD (worker_thread),
     0,
     remote_address,
     0
   };
   GumAddress retval;
-  GumAddress function = frida_resolve_remote_libc_function (pid, "pthread_create");
+  GumAddress function = telco_resolve_remote_libc_function (pid, "pthread_create");
 
   if (function == -1)
   {
@@ -496,14 +496,14 @@ frida_remote_pthread_create (pid_t pid, GumAddress remote_address, GError ** err
     return -1;
   }
 
-  if (!frida_remote_call (pid, function, args, G_N_ELEMENTS (args), &retval, error))
+  if (!telco_remote_call (pid, function, args, G_N_ELEMENTS (args), &retval, error))
     return -1;
 
   return retval;
 }
 
 static int
-frida_remote_msync (pid_t pid, GumAddress remote_address, gint size, gint flags, GError ** error)
+telco_remote_msync (pid_t pid, GumAddress remote_address, gint size, gint flags, GError ** error)
 {
   GumAddress args[] = {
     remote_address,
@@ -511,7 +511,7 @@ frida_remote_msync (pid_t pid, GumAddress remote_address, gint size, gint flags,
     flags
   };
   GumAddress retval;
-  GumAddress function = frida_resolve_remote_libc_function (pid, "msync");
+  GumAddress function = telco_resolve_remote_libc_function (pid, "msync");
 
   if (function == -1)
   {
@@ -519,14 +519,14 @@ frida_remote_msync (pid_t pid, GumAddress remote_address, gint size, gint flags,
     return -1;
   }
 
-  if (!frida_remote_call (pid, function, args, G_N_ELEMENTS (args), &retval, error))
+  if (!telco_remote_call (pid, function, args, G_N_ELEMENTS (args), &retval, error))
     return -1;
 
   return retval;
 }
 
 static gboolean
-frida_remote_write (pid_t pid, GumAddress remote_address, gconstpointer data, gsize size, GError ** error)
+telco_remote_write (pid_t pid, GumAddress remote_address, gconstpointer data, gsize size, GError ** error)
 {
   gint fd;
   gchar as_path[PATH_MAX];
@@ -537,7 +537,7 @@ frida_remote_write (pid_t pid, GumAddress remote_address, gconstpointer data, gs
   if (fd == -1)
     return FALSE;
 
-  result = frida_remote_write_fd (fd, remote_address, data, size, error);
+  result = telco_remote_write_fd (fd, remote_address, data, size, error);
 
   close (fd);
 
@@ -545,7 +545,7 @@ frida_remote_write (pid_t pid, GumAddress remote_address, gconstpointer data, gs
 }
 
 static gboolean
-frida_remote_write_fd (gint fd, GumAddress remote_address, gconstpointer data, gsize size, GError ** error)
+telco_remote_write_fd (gint fd, GumAddress remote_address, gconstpointer data, gsize size, GError ** error)
 {
   long ret;
   const gchar * failed_operation;
@@ -566,7 +566,7 @@ os_failure:
 }
 
 static gboolean
-frida_remote_call (pid_t pid, GumAddress func, const GumAddress * args, gint args_length, GumAddress * retval, GError ** error)
+telco_remote_call (pid_t pid, GumAddress func, const GumAddress * args, gint args_length, GumAddress * retval, GError ** error)
 {
   gboolean success = FALSE;
   gint ret;
@@ -672,7 +672,7 @@ frida_remote_call (pid_t pid, GumAddress func, const GumAddress * args, gint arg
   {
     modified_registers.arm.gpr[GUM_QNX_ARM_REG_SP] -= 4;
 
-    if (!frida_remote_write_fd (fd, modified_registers.arm.gpr[GUM_QNX_ARM_REG_SP], &args[i],
+    if (!telco_remote_write_fd (fd, modified_registers.arm.gpr[GUM_QNX_ARM_REG_SP], &args[i],
         4, error))
       goto beach;
   }
@@ -743,22 +743,22 @@ os_failure:
 }
 
 static GumAddress
-frida_resolve_remote_libc_function (int remote_pid, const gchar * function_name)
+telco_resolve_remote_libc_function (int remote_pid, const gchar * function_name)
 {
-  return frida_resolve_remote_library_function (remote_pid, "libc", function_name);
+  return telco_resolve_remote_library_function (remote_pid, "libc", function_name);
 }
 
 static GumAddress
-frida_resolve_remote_library_function (int remote_pid, const gchar * library_name, const gchar * function_name)
+telco_resolve_remote_library_function (int remote_pid, const gchar * library_name, const gchar * function_name)
 {
   gchar * local_library_path, * remote_library_path, * canonical_library_name;
   GumAddress local_base, remote_base, remote_address;
   gpointer module, local_address;
 
-  local_base = frida_find_library_base (getpid (), library_name, &local_library_path);
+  local_base = telco_find_library_base (getpid (), library_name, &local_library_path);
   g_assert (local_base != 0);
 
-  remote_base = frida_find_library_base (remote_pid, library_name, &remote_library_path);
+  remote_base = telco_find_library_base (remote_pid, library_name, &remote_library_path);
   if (remote_base == 0)
   {
     g_free (local_library_path);
@@ -787,7 +787,7 @@ frida_resolve_remote_library_function (int remote_pid, const gchar * library_nam
 }
 
 static GumAddress
-frida_find_library_base (pid_t pid, const gchar * library_name, gchar ** library_path)
+telco_find_library_base (pid_t pid, const gchar * library_name, gchar ** library_path)
 {
   GumAddress result = 0;
   gchar * as_path = NULL;

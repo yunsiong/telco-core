@@ -1,4 +1,4 @@
-#define FRIDA_PRINTF_BUFFER_SIZE (512 * 1024)
+#define TELCO_PRINTF_BUFFER_SIZE (512 * 1024)
 
 #include <errno.h>
 #include <gum/gum.h>
@@ -20,37 +20,37 @@
 #if defined (HAVE_WINDOWS) || defined (HAVE_ASAN)
 
 void
-frida_run_atexit_handlers (void)
+telco_run_atexit_handlers (void)
 {
 }
 
 #else
 
-#define FRIDA_SHIM_LOCK() gum_spinlock_acquire (&frida_shim_lock)
-#define FRIDA_SHIM_UNLOCK() gum_spinlock_release (&frida_shim_lock)
+#define TELCO_SHIM_LOCK() gum_spinlock_acquire (&telco_shim_lock)
+#define TELCO_SHIM_UNLOCK() gum_spinlock_release (&telco_shim_lock)
 
-typedef struct _FridaExitEntry FridaExitEntry;
-typedef void (* FridaExitFunc) (gpointer user_data);
+typedef struct _TelcoExitEntry TelcoExitEntry;
+typedef void (* TelcoExitFunc) (gpointer user_data);
 
-struct _FridaExitEntry
+struct _TelcoExitEntry
 {
-  FridaExitFunc func;
+  TelcoExitFunc func;
   gpointer user_data;
 };
 
-static gboolean frida_heap_initialized = FALSE;
-static FridaExitEntry * frida_atexit_entries = NULL;
-static guint frida_atexit_count = 0;
+static gboolean telco_heap_initialized = FALSE;
+static TelcoExitEntry * telco_atexit_entries = NULL;
+static guint telco_atexit_count = 0;
 
-static GumSpinlock frida_shim_lock = GUM_SPINLOCK_INIT;
+static GumSpinlock telco_shim_lock = GUM_SPINLOCK_INIT;
 
 __attribute__ ((constructor)) static void
-frida_init_memory (void)
+telco_init_memory (void)
 {
-  if (!frida_heap_initialized)
+  if (!telco_heap_initialized)
   {
     gum_internal_heap_ref ();
-    frida_heap_initialized = TRUE;
+    telco_heap_initialized = TRUE;
   }
 }
 
@@ -66,7 +66,7 @@ frida_init_memory (void)
 #ifndef HAVE_DARWIN
 
 __attribute__ ((destructor)) static void
-frida_deinit_memory (void)
+telco_deinit_memory (void)
 {
   gum_internal_heap_unref ();
 }
@@ -74,34 +74,34 @@ frida_deinit_memory (void)
 #endif
 
 void
-frida_run_atexit_handlers (void)
+telco_run_atexit_handlers (void)
 {
   gint i;
 
-  for (i = (gint) frida_atexit_count - 1; i >= 0; i--)
+  for (i = (gint) telco_atexit_count - 1; i >= 0; i--)
   {
-    const FridaExitEntry * entry = &frida_atexit_entries[i];
+    const TelcoExitEntry * entry = &telco_atexit_entries[i];
 
     entry->func (entry->user_data);
   }
 
-  gum_free (frida_atexit_entries);
-  frida_atexit_entries = 0;
-  frida_atexit_count = 0;
+  gum_free (telco_atexit_entries);
+  telco_atexit_entries = 0;
+  telco_atexit_count = 0;
 }
 
 G_GNUC_INTERNAL int
 __cxa_atexit (void (* func) (void *), void * arg, void * dso_handle)
 {
-  FridaExitEntry * entry;
+  TelcoExitEntry * entry;
 
-  frida_init_memory ();
+  telco_init_memory ();
 
-  FRIDA_SHIM_LOCK ();
-  frida_atexit_count++;
-  frida_atexit_entries = gum_realloc (frida_atexit_entries, frida_atexit_count * sizeof (FridaExitEntry));
-  entry = &frida_atexit_entries[frida_atexit_count - 1];
-  FRIDA_SHIM_UNLOCK ();
+  TELCO_SHIM_LOCK ();
+  telco_atexit_count++;
+  telco_atexit_entries = gum_realloc (telco_atexit_entries, telco_atexit_count * sizeof (TelcoExitEntry));
+  entry = &telco_atexit_entries[telco_atexit_count - 1];
+  TELCO_SHIM_UNLOCK ();
 
   entry->func = func;
   entry->user_data = arg;
@@ -114,7 +114,7 @@ __cxa_atexit (void (* func) (void *), void * arg, void * dso_handle)
 G_GNUC_INTERNAL int
 atexit (void (* func) (void))
 {
-  __cxa_atexit ((FridaExitFunc) func, NULL, NULL);
+  __cxa_atexit ((TelcoExitFunc) func, NULL, NULL);
 
   return 0;
 }
@@ -231,7 +231,7 @@ sprintf (char * string, const char * format, ...)
   va_list args;
 
   va_start (args, format);
-  result = gum_vsnprintf (string, FRIDA_PRINTF_BUFFER_SIZE, format, args);
+  result = gum_vsnprintf (string, TELCO_PRINTF_BUFFER_SIZE, format, args);
   va_end (args);
 
   return result;
@@ -327,7 +327,7 @@ sprintf_l (char * string, locale_t loc, const char * format, ...)
   va_list args;
 
   va_start (args, format);
-  result = gum_vsnprintf (string, FRIDA_PRINTF_BUFFER_SIZE, format, args);
+  result = gum_vsnprintf (string, TELCO_PRINTF_BUFFER_SIZE, format, args);
   va_end (args);
 
   return result;
@@ -463,7 +463,7 @@ dup3 (int old_fd, int new_fd, int flags)
 }
 
 G_GNUC_INTERNAL long
-_frida_set_errno (int n)
+_telco_set_errno (int n)
 {
   errno = n;
 

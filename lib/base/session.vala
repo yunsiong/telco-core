@@ -1,5 +1,5 @@
-namespace Frida {
-	[DBus (name = "re.frida.HostSession16")]
+namespace Telco {
+	[DBus (name = "re.telco.HostSession16")]
 	public interface HostSession : Object {
 		public abstract async void ping (uint interval_seconds, Cancellable? cancellable) throws GLib.Error;
 
@@ -37,7 +37,7 @@ namespace Frida {
 		public signal void uninjected (InjectorPayloadId id);
 	}
 
-	[DBus (name = "re.frida.AgentSessionProvider16")]
+	[DBus (name = "re.telco.AgentSessionProvider16")]
 	public interface AgentSessionProvider : Object {
 		public abstract async void open (AgentSessionId id, HashTable<string, Variant> options,
 			Cancellable? cancellable) throws GLib.Error;
@@ -52,7 +52,7 @@ namespace Frida {
 		public signal void child_gating_changed (uint subscriber_count);
 	}
 
-	[DBus (name = "re.frida.AgentSession16")]
+	[DBus (name = "re.telco.AgentSession16")]
 	public interface AgentSession : Object {
 		public abstract async void close (Cancellable? cancellable) throws GLib.Error;
 
@@ -94,7 +94,7 @@ namespace Frida {
 		public signal void candidate_gathering_done ();
 	}
 
-	[DBus (name = "re.frida.AgentController16")]
+	[DBus (name = "re.telco.AgentController16")]
 	public interface AgentController : Object {
 #if !WINDOWS
 		public abstract async HostChildId prepare_to_fork (uint parent_pid, Cancellable? cancellable, out uint parent_injectee_id,
@@ -115,7 +115,7 @@ namespace Frida {
 			Cancellable? cancellable) throws GLib.Error;
 	}
 
-	[DBus (name = "re.frida.AgentMessageSink16")]
+	[DBus (name = "re.telco.AgentMessageSink16")]
 	public interface AgentMessageSink : Object {
 		public abstract async void post_messages (AgentMessage[] messages, uint batch_id,
 			Cancellable? cancellable) throws GLib.Error;
@@ -160,7 +160,7 @@ namespace Frida {
 			set;
 		}
 
-		public MainContext frida_context {
+		public MainContext telco_context {
 			get;
 			construct;
 		}
@@ -198,16 +198,16 @@ namespace Frida {
 			INTERRUPTED
 		}
 
-		public AgentMessageTransmitter (uint persist_timeout, MainContext frida_context, MainContext dbus_context) {
+		public AgentMessageTransmitter (uint persist_timeout, MainContext telco_context, MainContext dbus_context) {
 			Object (
 				persist_timeout: persist_timeout,
-				frida_context: frida_context,
+				telco_context: telco_context,
 				dbus_context: dbus_context
 			);
 		}
 
 		construct {
-			assert (frida_context != null);
+			assert (telco_context != null);
 			assert (dbus_context != null);
 		}
 
@@ -251,7 +251,7 @@ namespace Frida {
 				close.begin (null);
 				return false;
 			});
-			expiry_timer.attach (frida_context);
+			expiry_timer.attach (telco_context);
 		}
 
 		public void resume (uint rx_batch_id, out uint tx_batch_id) throws Error {
@@ -271,7 +271,7 @@ namespace Frida {
 			delivery_cancellable = new Cancellable ();
 			state = LIVE;
 
-			schedule_on_frida_thread (() => {
+			schedule_on_telco_thread (() => {
 				maybe_deliver_pending_messages ();
 				return false;
 			});
@@ -292,7 +292,7 @@ namespace Frida {
 			var offer = PeerSessionDescription.parse (offer_sdp);
 
 			var agent = new Nice.Agent.full (dbus_context, Nice.Compatibility.RFC5245, ICE_TRICKLE);
-			agent.set_software ("Frida");
+			agent.set_software ("Telco");
 			agent.controlling_mode = false;
 			agent.ice_tcp = false;
 
@@ -342,7 +342,7 @@ namespace Frida {
 		}
 
 		private async void teardown_peer_connection_and_emit_closed () {
-			schedule_on_frida_thread (() => {
+			schedule_on_telco_thread (() => {
 				if (nice_agent != null)
 					close_nice_resources_and_emit_closed.begin ();
 				else
@@ -375,7 +375,7 @@ namespace Frida {
 				schedule_on_dbus_thread (() => {
 					agent.close_async.begin ();
 
-					schedule_on_frida_thread (() => {
+					schedule_on_telco_thread (() => {
 						close_nice_resources.callback ();
 						return false;
 					});
@@ -429,7 +429,7 @@ namespace Frida {
 							var stolen_candidates = pending_candidates;
 							pending_candidates = new Gee.ArrayList<string> ();
 
-							schedule_on_frida_thread (() => {
+							schedule_on_telco_thread (() => {
 								int n = stolen_candidates.size;
 								var sdps = new string[n + 1];
 								for (int i = 0; i != n; i++)
@@ -447,7 +447,7 @@ namespace Frida {
 
 				gathering_handler = agent.candidate_gathering_done.connect (stream_id => {
 					schedule_on_dbus_thread (() => {
-						schedule_on_frida_thread (() => {
+						schedule_on_telco_thread (() => {
 							candidate_gathering_done ();
 							return false;
 						});
@@ -474,12 +474,12 @@ namespace Frida {
 
 				nice_iostream = new SctpConnection (tc, offer.setup, offer.sctp_port, offer.max_message_size);
 
-				schedule_on_frida_thread (() => {
+				schedule_on_telco_thread (() => {
 					complete_peer_connection.begin ();
 					return false;
 				});
 			} catch (GLib.Error e) {
-				schedule_on_frida_thread (() => {
+				schedule_on_telco_thread (() => {
 					close_nice_resources.begin (false);
 					return false;
 				});
@@ -580,7 +580,7 @@ namespace Frida {
 		}
 
 		private async void teardown_peer_connection_and_emit_closed () {
-			schedule_on_frida_thread (() => {
+			schedule_on_telco_thread (() => {
 				closed ();
 				return Source.REMOVE;
 			});
@@ -702,10 +702,10 @@ namespace Frida {
 			}
 		}
 
-		protected void schedule_on_frida_thread (owned SourceFunc function) {
+		protected void schedule_on_telco_thread (owned SourceFunc function) {
 			var source = new IdleSource ();
 			source.set_callback ((owned) function);
-			source.attach (frida_context);
+			source.attach (telco_context);
 		}
 
 		protected void schedule_on_dbus_thread (owned SourceFunc function) {
@@ -737,13 +737,13 @@ namespace Frida {
 		}
 	}
 
-	[DBus (name = "re.frida.TransportBroker16")]
+	[DBus (name = "re.telco.TransportBroker16")]
 	public interface TransportBroker : Object {
 		public abstract async void open_tcp_transport (AgentSessionId id, Cancellable? cancellable, out uint16 port,
 			out string token) throws GLib.Error;
 	}
 
-	[DBus (name = "re.frida.PortalSession16")]
+	[DBus (name = "re.telco.PortalSession16")]
 	public interface PortalSession : Object {
 		public abstract async void join (HostApplicationInfo app, SpawnStartState current_state,
 			AgentSessionId[] interrupted_sessions, HashTable<string, Variant> options, Cancellable? cancellable,
@@ -752,14 +752,14 @@ namespace Frida {
 		public signal void kill ();
 	}
 
-	[DBus (name = "re.frida.BusSession16")]
+	[DBus (name = "re.telco.BusSession16")]
 	public interface BusSession : Object {
 		public abstract async void attach (Cancellable? cancellable) throws GLib.Error;
 		public abstract async void post (string json, bool has_data, uint8[] data, Cancellable? cancellable) throws GLib.Error;
 		public signal void message (string json, bool has_data, uint8[] data);
 	}
 
-	[DBus (name = "re.frida.AuthenticationService16")]
+	[DBus (name = "re.telco.AuthenticationService16")]
 	public interface AuthenticationService : Object {
 		public abstract async string authenticate (string token, Cancellable? cancellable) throws GLib.Error;
 	}
@@ -970,7 +970,7 @@ namespace Frida {
 
 #if LINUX
 	public struct LinuxInjectorState {
-		public int frida_ctrlfd;
+		public int telco_ctrlfd;
 		public int agent_ctrlfd;
 	}
 #endif
@@ -997,7 +997,7 @@ namespace Frida {
 		}
 	}
 
-	[DBus (name = "re.frida.Error")]
+	[DBus (name = "re.telco.Error")]
 	public errordomain Error {
 		SERVER_NOT_RUNNING,
 		EXECUTABLE_NOT_FOUND,
@@ -1015,9 +1015,9 @@ namespace Frida {
 	}
 
 	[NoReturn]
-	public static void throw_api_error (GLib.Error e) throws Frida.Error, IOError {
-		if (e is Frida.Error)
-			throw (Frida.Error) e;
+	public static void throw_api_error (GLib.Error e) throws Telco.Error, IOError {
+		if (e is Telco.Error)
+			throw (Telco.Error) e;
 
 		if (e is IOError.CANCELLED)
 			throw (IOError) e;
@@ -1026,22 +1026,22 @@ namespace Frida {
 	}
 
 	[NoReturn]
-	public static void throw_dbus_error (GLib.Error e) throws Frida.Error, IOError {
+	public static void throw_dbus_error (GLib.Error e) throws Telco.Error, IOError {
 		DBusError.strip_remote_error (e);
 
-		if (e is Frida.Error)
-			throw (Frida.Error) e;
+		if (e is Telco.Error)
+			throw (Telco.Error) e;
 
 		if (e is IOError.CANCELLED)
 			throw (IOError) e;
 
 		if (e is DBusError.UNKNOWN_METHOD) {
-			throw new Frida.Error.PROTOCOL ("Unable to communicate with remote frida-server; " +
-				"please ensure that major versions match and that the remote Frida has the " +
+			throw new Telco.Error.PROTOCOL ("Unable to communicate with remote telco-server; " +
+				"please ensure that major versions match and that the remote Telco has the " +
 				"feature you are trying to use");
 		}
 
-		throw new Frida.Error.TRANSPORT ("%s", e.message);
+		throw new Telco.Error.TRANSPORT ("%s", e.message);
 	}
 
 	public struct HostApplicationInfo {
@@ -2037,16 +2037,16 @@ namespace Frida {
 	}
 
 	namespace ObjectPath {
-		public const string HOST_SESSION = "/re/frida/HostSession";
-		public const string AGENT_SESSION_PROVIDER = "/re/frida/AgentSessionProvider";
-		public const string AGENT_SESSION = "/re/frida/AgentSession";
-		public const string AGENT_CONTROLLER = "/re/frida/AgentController";
-		public const string AGENT_MESSAGE_SINK = "/re/frida/AgentMessageSink";
-		public const string CHILD_SESSION = "/re/frida/ChildSession";
-		public const string TRANSPORT_BROKER = "/re/frida/TransportBroker";
-		public const string PORTAL_SESSION = "/re/frida/PortalSession";
-		public const string BUS_SESSION = "/re/frida/BusSession";
-		public const string AUTHENTICATION_SERVICE = "/re/frida/AuthenticationService";
+		public const string HOST_SESSION = "/re/telco/HostSession";
+		public const string AGENT_SESSION_PROVIDER = "/re/telco/AgentSessionProvider";
+		public const string AGENT_SESSION = "/re/telco/AgentSession";
+		public const string AGENT_CONTROLLER = "/re/telco/AgentController";
+		public const string AGENT_MESSAGE_SINK = "/re/telco/AgentMessageSink";
+		public const string CHILD_SESSION = "/re/telco/ChildSession";
+		public const string TRANSPORT_BROKER = "/re/telco/TransportBroker";
+		public const string PORTAL_SESSION = "/re/telco/PortalSession";
+		public const string BUS_SESSION = "/re/telco/BusSession";
+		public const string AUTHENTICATION_SERVICE = "/re/telco/AuthenticationService";
 
 		public static string for_agent_session (AgentSessionId id) {
 			return AGENT_SESSION + "/" + id.handle;

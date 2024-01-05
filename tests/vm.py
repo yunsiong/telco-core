@@ -12,7 +12,7 @@ def run(arch: str, args: [str]):
     child.sendline("root")
     child.expect("# ")
 
-    child.sendline(shlex.join(["/root/frida-tests"] + args))
+    child.sendline(shlex.join(["/root/telco-tests"] + args))
     child.interact()
 
 

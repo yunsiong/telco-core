@@ -1,13 +1,13 @@
 generate_api = files('generate.py')
 
-core_vapi = join_paths(core_build_dir, 'frida-core.vapi')
-core_header = join_paths(core_build_dir, 'frida-core.h')
-base_vapi = join_paths(base_build_dir, f'frida-base-@api_version@.vapi')
-base_header = join_paths(base_build_dir, 'frida-base.h')
+core_vapi = join_paths(core_build_dir, 'telco-core.vapi')
+core_header = join_paths(core_build_dir, 'telco-core.h')
+base_vapi = join_paths(base_build_dir, f'telco-base-@api_version@.vapi')
+base_header = join_paths(base_build_dir, 'telco-base.h')
 
-custom_target('frida-core-header',
+custom_target('telco-core-header',
   input: [core, base],
-  output: ['frida-core.h'],
+  output: ['telco-core.h'],
   command: [
     generate_api,
     '--output=header',
@@ -20,11 +20,11 @@ custom_target('frida-core-header',
   install_dir: header_install_dir,
 )
 
-custom_target('frida-core-vapi',
+custom_target('telco-core-vapi',
   input: [core, base],
   output: [
-    'frida-core-@0@.vapi'.format(api_version),
-    'frida-core-@0@.deps'.format(api_version)
+    'telco-core-@0@.vapi'.format(api_version),
+    'telco-core-@0@.deps'.format(api_version)
   ],
   command: [
     generate_api,
@@ -38,9 +38,9 @@ custom_target('frida-core-vapi',
   install_dir: join_paths(get_option('datadir'), 'vala', 'vapi'),
 )
 
-custom_target('frida-core-library',
+custom_target('telco-core-library',
   input: [core] + internal_libs,
-  output: 'libfrida-core-@0@.a'.format(api_version),
+  output: 'libtelco-core-@0@.a'.format(api_version),
   command: [
     files('merge.sh'),
     ar,
@@ -54,13 +54,13 @@ custom_target('frida-core-library',
 )
 
 pkg = import('pkgconfig')
-pkg.generate(filebase: 'frida-core-' + api_version,
-  name: 'Frida Core',
+pkg.generate(filebase: 'telco-core-' + api_version,
+  name: 'Telco Core',
   version: meson.project_version(),
-  description: 'Frida core library intended for static linking into bindings',
+  description: 'Telco core library intended for static linking into bindings',
   requires: ['glib-2.0', 'gobject-2.0', 'gio-2.0', 'json-glib-1.0'],
-  requires_private: ['gmodule-2.0', 'gee-0.8', libsoup_dep, 'frida-gum-1.0', 'frida-gumjs-inspector-1.0', 'libbrotlidec'] + backend_deps_private,
-  subdirs: 'frida-' + api_version,
-  libraries: ['-L${libdir}', '-lfrida-core-' + api_version],
+  requires_private: ['gmodule-2.0', 'gee-0.8', libsoup_dep, 'telco-gum-1.0', 'telco-gumjs-inspector-1.0', 'libbrotlidec'] + backend_deps_private,
+  subdirs: 'telco-' + api_version,
+  libraries: ['-L${libdir}', '-ltelco-core-' + api_version],
   libraries_private: backend_libs_private,
 )

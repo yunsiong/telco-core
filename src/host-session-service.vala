@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class HostSessionService : Object {
 		private Gee.ArrayList<HostSessionBackend> backends = new Gee.ArrayList<HostSessionBackend> ();
 
@@ -449,7 +449,7 @@ namespace Frida {
 				promise.resolve (entry);
 			} catch (GLib.Error e) {
 				if (e is IOError.CANCELLED && (cancellable == null || !cancellable.is_cancelled ())) {
-					e = new Error.PROCESS_NOT_RESPONDING ("Process with pid %u either refused to load frida-agent, " +
+					e = new Error.PROCESS_NOT_RESPONDING ("Process with pid %u either refused to load telco-agent, " +
 						"or terminated during injection", pid);
 				}
 

@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class SpawnMonitor : Object, Gum.InvocationListener {
 		public weak SpawnHandler handler {
 			get;

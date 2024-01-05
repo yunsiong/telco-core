@@ -27,19 +27,19 @@
  * SUCH DAMAGE.
  */
 
-#ifndef __FRIDA_AGENT_SYSCALL_LINUX_H__
-#define __FRIDA_AGENT_SYSCALL_LINUX_H__
+#ifndef __TELCO_AGENT_SYSCALL_LINUX_H__
+#define __TELCO_AGENT_SYSCALL_LINUX_H__
 
 #include <asm/unistd.h> /* For system call numbers. */
-#define FRIDA_MAX_ERRNO 4095  /* For recognizing system call error returns. */
+#define TELCO_MAX_ERRNO 4095  /* For recognizing system call error returns. */
 
 #define ENTRY_NO_DWARF(f) \
     .text; \
     .globl f; \
-    .balign frida_asm_align; \
-    .type f, frida_asm_function_type; \
+    .balign telco_asm_align; \
+    .type f, telco_asm_function_type; \
     f: \
-    frida_asm_custom_entry(f); \
+    telco_asm_custom_entry(f); \
 
 #define ENTRY(f) \
     ENTRY_NO_DWARF(f) \
@@ -47,7 +47,7 @@
 
 #define END_NO_DWARF(f) \
     .size f, .-f; \
-    frida_asm_custom_end(f) \
+    telco_asm_custom_end(f) \
 
 #define END(f) \
     .cfi_endproc; \
@@ -67,4 +67,4 @@
     .globl alias; \
     .equ alias, original
 
-#endif /* __FRIDA_AGENT_SYSCALL_LINUX_H__ */
+#endif /* __TELCO_AGENT_SYSCALL_LINUX_H__ */

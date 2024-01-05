@@ -16,7 +16,7 @@ if quickjs_dep.found()
     'arch-arm64/machine.vala',
     'arch-unknown/machine.vala',
   )
-  barebone_script_runtime = custom_target('frida-barebone-script-runtime',
+  barebone_script_runtime = custom_target('telco-barebone-script-runtime',
     input: [
       'package.json',
       'package-lock.json',
@@ -36,23 +36,23 @@ if quickjs_dep.found()
       meson.current_build_dir(),
     ],
   )
-  barebone_data = custom_target('frida-data-barebone',
+  barebone_data = custom_target('telco-data-barebone',
     input: [
       'barebone.resources',
       barebone_script_runtime,
       'helpers/memory-scanner-arm64.elf',
     ],
     output: [
-      'frida-data-barebone.vapi',
-      'frida-data-barebone.h',
-      'frida-data-barebone.c',
-      'frida-data-barebone-blob.S',
+      'telco-data-barebone.vapi',
+      'telco-data-barebone.h',
+      'telco-data-barebone.c',
+      'telco-data-barebone-blob.S',
     ],
     command: [
       resource_compiler,
       '--toolchain=' + host_toolchain,
       '-c', '@INPUT0@',
-      '-o', join_paths(meson.current_build_dir(), 'frida-data-barebone'),
+      '-o', join_paths(meson.current_build_dir(), 'telco-data-barebone'),
       '@INPUT1@',
       '@INPUT2@',
     ],

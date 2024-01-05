@@ -1,18 +1,18 @@
-#include "frida-core.h"
+#include "telco-core.h"
 
 #include "../darwin/icon-helpers.h"
-#include "frida-base.h"
+#include "telco-base.h"
 
-typedef struct _FridaFruityModel FridaFruityModel;
+typedef struct _TelcoFruityModel TelcoFruityModel;
 
-struct _FridaFruityModel
+struct _TelcoFruityModel
 {
   gint product_id;
   const gchar * name;
   const gchar * icon;
 };
 
-static const FridaFruityModel fruity_models[] =
+static const TelcoFruityModel fruity_models[] =
 {
   { -1,     "iOS Device",          "com.apple.iphone-4-black" },
   { 0x1290, "iPhone",              "com.apple.iphone" },
@@ -40,9 +40,9 @@ static const FridaFruityModel fruity_models[] =
 };
 
 void
-_frida_fruity_host_session_backend_extract_details_for_device (gint product_id, const char * udid, char ** name, GVariant ** icon, GError ** error)
+_telco_fruity_host_session_backend_extract_details_for_device (gint product_id, const char * udid, char ** name, GVariant ** icon, GError ** error)
 {
-  const FridaFruityModel * model;
+  const TelcoFruityModel * model;
   guint i;
   gchar * filename;
 
@@ -56,6 +56,6 @@ _frida_fruity_host_session_backend_extract_details_for_device (gint product_id, 
 
   filename = g_strconcat ("/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/", model->icon, ".icns", NULL);
   *name = g_strdup (model->name);
-  *icon = _frida_icon_from_file (filename, 16, 16);
+  *icon = _telco_icon_from_file (filename, 16, 16);
   g_free (filename);
 }

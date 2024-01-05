@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class PipeTransport : Object {
 		public string local_address {
 			get;
@@ -167,7 +167,7 @@ namespace Frida {
 
 					Posix.chmod (path, Posix.S_IRUSR | Posix.S_IWUSR | Posix.S_IRGRP | Posix.S_IWGRP | Posix.S_IROTH | Posix.S_IWOTH);
 #if ANDROID
-					SELinux.setfilecon (path, "u:object_r:frida_file:s0");
+					SELinux.setfilecon (path, "u:object_r:telco_file:s0");
 #endif
 
 					establish_server.begin (socket, server_address, promise, cancellable);

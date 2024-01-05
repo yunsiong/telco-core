@@ -1,11 +1,11 @@
 #include "server-glue.h"
 
-#include "frida-core.h"
+#include "telco-core.h"
 #if defined (HAVE_IOS) || defined (HAVE_TVOS)
 # include "server-ios-tvos.h"
 #endif
 #ifdef HAVE_ANDROID
-# include "frida-selinux.h"
+# include "telco-selinux.h"
 #endif
 
 #if defined (HAVE_DARWIN)
@@ -33,40 +33,40 @@ void CFLog (CFLogLevel level, CFStringRef format, ...);
 # include <stdio.h>
 #endif
 
-static void frida_server_on_log_message (const gchar * log_domain, GLogLevelFlags log_level, const gchar * message, gpointer user_data);
+static void telco_server_on_log_message (const gchar * log_domain, GLogLevelFlags log_level, const gchar * message, gpointer user_data);
 
-static gboolean frida_verbose_logging_enabled = FALSE;
+static gboolean telco_verbose_logging_enabled = FALSE;
 
 void
-frida_server_environment_init (void)
+telco_server_environment_init (void)
 {
-  frida_init_with_runtime (FRIDA_RUNTIME_GLIB);
+  telco_init_with_runtime (TELCO_RUNTIME_GLIB);
 
-  g_log_set_default_handler (frida_server_on_log_message, NULL);
+  g_log_set_default_handler (telco_server_on_log_message, NULL);
 }
 
 void
-frida_server_environment_set_verbose_logging_enabled (gboolean enabled)
+telco_server_environment_set_verbose_logging_enabled (gboolean enabled)
 {
-  frida_verbose_logging_enabled = enabled;
+  telco_verbose_logging_enabled = enabled;
 }
 
 void
-frida_server_environment_configure (void)
+telco_server_environment_configure (void)
 {
 #if defined (HAVE_IOS) || defined (HAVE_TVOS)
-  _frida_server_ios_tvos_configure ();
+  _telco_server_ios_tvos_configure ();
 #endif
 
 #ifdef HAVE_ANDROID
-  frida_selinux_patch_policy ();
+  telco_selinux_patch_policy ();
 #endif
 }
 
 static void
-frida_server_on_log_message (const gchar * log_domain, GLogLevelFlags log_level, const gchar * message, gpointer user_data)
+telco_server_on_log_message (const gchar * log_domain, GLogLevelFlags log_level, const gchar * message, gpointer user_data)
 {
-  if (!frida_verbose_logging_enabled && (log_level & G_LOG_LEVEL_MASK) >= G_LOG_LEVEL_DEBUG)
+  if (!telco_verbose_logging_enabled && (log_level & G_LOG_LEVEL_MASK) >= G_LOG_LEVEL_DEBUG)
     return;
 
 #if defined (HAVE_DARWIN)

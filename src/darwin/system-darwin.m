@@ -1,4 +1,4 @@
-#include "frida-core.h"
+#include "telco-core.h"
 
 #include "icon-helpers.h"
 
@@ -28,72 +28,72 @@
 # define PROC_PIDPATHINFO_MAXSIZE (4 * MAXPATHLEN)
 #endif
 
-typedef struct _FridaEnumerateApplicationsOperation FridaEnumerateApplicationsOperation;
-typedef struct _FridaEnumerateProcessesOperation FridaEnumerateProcessesOperation;
+typedef struct _TelcoEnumerateApplicationsOperation TelcoEnumerateApplicationsOperation;
+typedef struct _TelcoEnumerateProcessesOperation TelcoEnumerateProcessesOperation;
 
-struct _FridaEnumerateApplicationsOperation
+struct _TelcoEnumerateApplicationsOperation
 {
-  FridaScope scope;
+  TelcoScope scope;
   GHashTable * process_by_identifier;
 #if defined (HAVE_IOS) || defined (HAVE_TVOS)
-  FridaSpringboardApi * api;
+  TelcoSpringboardApi * api;
 #endif
 
   GArray * result;
 };
 
-struct _FridaEnumerateProcessesOperation
+struct _TelcoEnumerateProcessesOperation
 {
-  FridaScope scope;
+  TelcoScope scope;
 #if defined (HAVE_IOS) || defined (HAVE_TVOS)
-  FridaSpringboardApi * api;
+  TelcoSpringboardApi * api;
 #endif
 
   GArray * result;
 };
 
 #if defined (HAVE_IOS) || defined (HAVE_TVOS)
-static void frida_collect_application_info_from_id_cstring (const gchar * identifier, FridaEnumerateApplicationsOperation * op);
-static void frida_collect_application_info_from_id_nsstring (NSString * identifier, FridaEnumerateApplicationsOperation * op);
+static void telco_collect_application_info_from_id_cstring (const gchar * identifier, TelcoEnumerateApplicationsOperation * op);
+static void telco_collect_application_info_from_id_nsstring (NSString * identifier, TelcoEnumerateApplicationsOperation * op);
 #endif
 
-static void frida_collect_process_info_from_pid (guint pid, FridaEnumerateProcessesOperation * op);
-static void frida_collect_process_info_from_kinfo (struct kinfo_proc * process, FridaEnumerateProcessesOperation * op);
+static void telco_collect_process_info_from_pid (guint pid, TelcoEnumerateProcessesOperation * op);
+static void telco_collect_process_info_from_kinfo (struct kinfo_proc * process, TelcoEnumerateProcessesOperation * op);
 
 #if defined (HAVE_MACOS) || defined (HAVE_IOS) || defined (HAVE_TVOS)
-static void frida_add_app_id (GHashTable * parameters, NSString * identifier);
+static void telco_add_app_id (GHashTable * parameters, NSString * identifier);
 #endif
 
 #if defined (HAVE_MACOS)
-static void frida_add_app_icons (GHashTable * parameters, NSImage * image);
+static void telco_add_app_icons (GHashTable * parameters, NSImage * image);
 #elif defined (HAVE_IOS) || defined (HAVE_TVOS)
-static void frida_add_app_metadata (GHashTable * parameters, NSString * identifier, FridaSpringboardApi * api);
-static void frida_add_app_state (GHashTable * parameters, guint pid, FridaSpringboardApi * api);
-static void frida_add_app_icons (GHashTable * parameters, NSString * identifier);
+static void telco_add_app_metadata (GHashTable * parameters, NSString * identifier, TelcoSpringboardApi * api);
+static void telco_add_app_state (GHashTable * parameters, guint pid, TelcoSpringboardApi * api);
+static void telco_add_app_icons (GHashTable * parameters, NSString * identifier);
 #endif
 
 #ifndef HAVE_MACOS
 extern int proc_pidpath (int pid, void * buffer, uint32_t buffer_size);
 #endif
 
-static void frida_add_process_metadata (GHashTable * parameters, const struct kinfo_proc * process);
+static void telco_add_process_metadata (GHashTable * parameters, const struct kinfo_proc * process);
 
-static struct kinfo_proc * frida_system_query_kinfo_procs (guint * count);
-static GVariant * frida_uid_to_name (uid_t uid);
+static struct kinfo_proc * telco_system_query_kinfo_procs (guint * count);
+static GVariant * telco_uid_to_name (uid_t uid);
 
 #if defined (HAVE_MACOS)
 
 void
-frida_system_get_frontmost_application (FridaFrontmostQueryOptions * options, FridaHostApplicationInfo * result, GError ** error)
+telco_system_get_frontmost_application (TelcoFrontmostQueryOptions * options, TelcoHostApplicationInfo * result, GError ** error)
 {
   g_set_error (error,
-      FRIDA_ERROR,
-      FRIDA_ERROR_NOT_SUPPORTED,
+      TELCO_ERROR,
+      TELCO_ERROR_NOT_SUPPORTED,
       "Not implemented");
 }
 
-FridaHostApplicationInfo *
-frida_system_enumerate_applications (FridaApplicationQueryOptions * options, int * result_length)
+TelcoHostApplicationInfo *
+telco_system_enumerate_applications (TelcoApplicationQueryOptions * options, int * result_length)
 {
   *result_length = 0;
 
@@ -103,19 +103,19 @@ frida_system_enumerate_applications (FridaApplicationQueryOptions * options, int
 #elif defined (HAVE_IOS) || defined (HAVE_TVOS)
 
 void
-frida_system_get_frontmost_application (FridaFrontmostQueryOptions * options, FridaHostApplicationInfo * result, GError ** error)
+telco_system_get_frontmost_application (TelcoFrontmostQueryOptions * options, TelcoHostApplicationInfo * result, GError ** error)
 {
   NSAutoreleasePool * pool;
-  FridaSpringboardApi * api;
+  TelcoSpringboardApi * api;
   NSString * identifier = nil;
   NSString * name = nil;
-  FridaScope scope;
+  TelcoScope scope;
   struct kinfo_proc * processes = NULL;
   guint count, i;
 
   pool = [[NSAutoreleasePool alloc] init];
 
-  api = _frida_get_springboard_api ();
+  api = _telco_get_springboard_api ();
 
   identifier = api->SBSCopyFrontmostApplicationDisplayIdentifier ();
   if (identifier == nil || identifier.length <= 1)
@@ -127,12 +127,12 @@ frida_system_get_frontmost_application (FridaFrontmostQueryOptions * options, Fr
 
   result->identifier = g_strdup ([identifier UTF8String]);
   result->name = g_strdup ([name UTF8String]);
-  result->parameters = frida_make_parameters_dict ();
+  result->parameters = telco_make_parameters_dict ();
   result->pid = 0;
 
-  scope = frida_frontmost_query_options_get_scope (options);
+  scope = telco_frontmost_query_options_get_scope (options);
 
-  processes = frida_system_query_kinfo_procs (&count);
+  processes = telco_system_query_kinfo_procs (&count);
 
   for (i = 0; i != count && result->pid == 0; i++)
   {
@@ -149,25 +149,25 @@ frida_system_get_frontmost_application (FridaFrontmostQueryOptions * options, Fr
       {
         result->pid = pid;
 
-        if (scope != FRIDA_SCOPE_MINIMAL)
-          frida_add_process_metadata (result->parameters, process);
+        if (scope != TELCO_SCOPE_MINIMAL)
+          telco_add_process_metadata (result->parameters, process);
       }
 
       [cur_identifier release];
     }
   }
 
-  if (scope != FRIDA_SCOPE_MINIMAL)
-    frida_add_app_metadata (result->parameters, identifier, api);
+  if (scope != TELCO_SCOPE_MINIMAL)
+    telco_add_app_metadata (result->parameters, identifier, api);
 
-  if (scope == FRIDA_SCOPE_FULL)
-    frida_add_app_icons (result->parameters, identifier);
+  if (scope == TELCO_SCOPE_FULL)
+    telco_add_app_icons (result->parameters, identifier);
 
   goto beach;
 
 no_frontmost_app:
   {
-    frida_host_application_info_init_empty (result);
+    telco_host_application_info_init_empty (result);
     goto beach;
   }
 beach:
@@ -181,23 +181,23 @@ beach:
   }
 }
 
-FridaHostApplicationInfo *
-frida_system_enumerate_applications (FridaApplicationQueryOptions * options, int * result_length)
+TelcoHostApplicationInfo *
+telco_system_enumerate_applications (TelcoApplicationQueryOptions * options, int * result_length)
 {
-  FridaEnumerateApplicationsOperation op;
+  TelcoEnumerateApplicationsOperation op;
   NSAutoreleasePool * pool;
   struct kinfo_proc * processes;
   guint count, i;
 
-  op.scope = frida_application_query_options_get_scope (options);
+  op.scope = telco_application_query_options_get_scope (options);
   op.process_by_identifier = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
-  op.api = _frida_get_springboard_api ();
+  op.api = _telco_get_springboard_api ();
 
-  op.result = g_array_new (FALSE, FALSE, sizeof (FridaHostApplicationInfo));
+  op.result = g_array_new (FALSE, FALSE, sizeof (TelcoHostApplicationInfo));
 
   pool = [[NSAutoreleasePool alloc] init];
 
-  processes = frida_system_query_kinfo_procs (&count);
+  processes = telco_system_query_kinfo_procs (&count);
   for (i = 0; i != count; i++)
   {
     struct kinfo_proc * process = &processes[i];
@@ -211,9 +211,9 @@ frida_system_enumerate_applications (FridaApplicationQueryOptions * options, int
     }
   }
 
-  if (frida_application_query_options_has_selected_identifiers (options))
+  if (telco_application_query_options_has_selected_identifiers (options))
   {
-    frida_application_query_options_enumerate_selected_identifiers (options, (GFunc) frida_collect_application_info_from_id_cstring, &op);
+    telco_application_query_options_enumerate_selected_identifiers (options, (GFunc) telco_collect_application_info_from_id_cstring, &op);
   }
   else
   {
@@ -224,7 +224,7 @@ frida_system_enumerate_applications (FridaApplicationQueryOptions * options, int
 
     count = [identifiers count];
     for (i = 0; i != count; i++)
-      frida_collect_application_info_from_id_nsstring ([identifiers objectAtIndex:i], &op);
+      telco_collect_application_info_from_id_nsstring ([identifiers objectAtIndex:i], &op);
 
     [identifiers release];
   }
@@ -236,21 +236,21 @@ frida_system_enumerate_applications (FridaApplicationQueryOptions * options, int
 
   *result_length = op.result->len;
 
-  return (FridaHostApplicationInfo *) g_array_free (op.result, FALSE);
+  return (TelcoHostApplicationInfo *) g_array_free (op.result, FALSE);
 }
 
 static void
-frida_collect_application_info_from_id_cstring (const gchar * identifier, FridaEnumerateApplicationsOperation * op)
+telco_collect_application_info_from_id_cstring (const gchar * identifier, TelcoEnumerateApplicationsOperation * op)
 {
-  frida_collect_application_info_from_id_nsstring ([NSString stringWithUTF8String:identifier], op);
+  telco_collect_application_info_from_id_nsstring ([NSString stringWithUTF8String:identifier], op);
 }
 
 static void
-frida_collect_application_info_from_id_nsstring (NSString * identifier, FridaEnumerateApplicationsOperation * op)
+telco_collect_application_info_from_id_nsstring (NSString * identifier, TelcoEnumerateApplicationsOperation * op)
 {
-  FridaHostApplicationInfo info = { 0, };
-  FridaScope scope = op->scope;
-  FridaSpringboardApi * api = op->api;
+  TelcoHostApplicationInfo info = { 0, };
+  TelcoScope scope = op->scope;
+  TelcoSpringboardApi * api = op->api;
   NSString * name;
   struct kinfo_proc * process;
 
@@ -263,7 +263,7 @@ frida_collect_application_info_from_id_nsstring (NSString * identifier, FridaEnu
 
   info.identifier = g_strdup (identifier.UTF8String);
   info.name = g_strdup ((name != nil) ? name.UTF8String : "");
-  info.parameters = frida_make_parameters_dict ();
+  info.parameters = telco_make_parameters_dict ();
 
   process = g_hash_table_lookup (op->process_by_identifier, info.identifier);
   if (process != NULL)
@@ -277,20 +277,20 @@ frida_collect_application_info_from_id_nsstring (NSString * identifier, FridaEnu
       info.pid = pid;
   }
 
-  if (scope != FRIDA_SCOPE_MINIMAL)
+  if (scope != TELCO_SCOPE_MINIMAL)
   {
-    frida_add_app_metadata (info.parameters, identifier, api);
+    telco_add_app_metadata (info.parameters, identifier, api);
 
     if (process != NULL)
     {
-      frida_add_app_state (info.parameters, process->kp_proc.p_pid, api);
+      telco_add_app_state (info.parameters, process->kp_proc.p_pid, api);
 
-      frida_add_process_metadata (info.parameters, process);
+      telco_add_process_metadata (info.parameters, process);
     }
   }
 
-  if (scope == FRIDA_SCOPE_FULL)
-    frida_add_app_icons (info.parameters, identifier);
+  if (scope == TELCO_SCOPE_FULL)
+    telco_add_app_icons (info.parameters, identifier);
 
   [name release];
 
@@ -299,34 +299,34 @@ frida_collect_application_info_from_id_nsstring (NSString * identifier, FridaEnu
 
 #endif
 
-FridaHostProcessInfo *
-frida_system_enumerate_processes (FridaProcessQueryOptions * options, int * result_length)
+TelcoHostProcessInfo *
+telco_system_enumerate_processes (TelcoProcessQueryOptions * options, int * result_length)
 {
-  FridaEnumerateProcessesOperation op;
+  TelcoEnumerateProcessesOperation op;
   NSAutoreleasePool * pool;
 
-  op.scope = frida_process_query_options_get_scope (options);
+  op.scope = telco_process_query_options_get_scope (options);
 #if defined (HAVE_IOS) || defined (HAVE_TVOS)
-  op.api = _frida_get_springboard_api ();
+  op.api = _telco_get_springboard_api ();
 #endif
 
-  op.result = g_array_new (FALSE, FALSE, sizeof (FridaHostProcessInfo));
+  op.result = g_array_new (FALSE, FALSE, sizeof (TelcoHostProcessInfo));
 
   pool = [[NSAutoreleasePool alloc] init];
 
-  if (frida_process_query_options_has_selected_pids (options))
+  if (telco_process_query_options_has_selected_pids (options))
   {
-    frida_process_query_options_enumerate_selected_pids (options, (GFunc) frida_collect_process_info_from_pid, &op);
+    telco_process_query_options_enumerate_selected_pids (options, (GFunc) telco_collect_process_info_from_pid, &op);
   }
   else
   {
     struct kinfo_proc * processes;
     guint count, i;
 
-    processes = frida_system_query_kinfo_procs (&count);
+    processes = telco_system_query_kinfo_procs (&count);
 
     for (i = 0; i != count; i++)
-      frida_collect_process_info_from_kinfo (&processes[i], &op);
+      telco_collect_process_info_from_kinfo (&processes[i], &op);
 
     g_free (processes);
   }
@@ -335,11 +335,11 @@ frida_system_enumerate_processes (FridaProcessQueryOptions * options, int * resu
 
   *result_length = op.result->len;
 
-  return (FridaHostProcessInfo *) g_array_free (op.result, FALSE);
+  return (TelcoHostProcessInfo *) g_array_free (op.result, FALSE);
 }
 
 static void
-frida_collect_process_info_from_pid (guint pid, FridaEnumerateProcessesOperation * op)
+telco_collect_process_info_from_pid (guint pid, TelcoEnumerateProcessesOperation * op)
 {
   struct kinfo_proc process;
   size_t size;
@@ -354,23 +354,23 @@ frida_collect_process_info_from_pid (guint pid, FridaEnumerateProcessesOperation
   if (size == 0)
     return;
 
-  frida_collect_process_info_from_kinfo (&process, op);
+  telco_collect_process_info_from_kinfo (&process, op);
 }
 
 static void
-frida_collect_process_info_from_kinfo (struct kinfo_proc * process, FridaEnumerateProcessesOperation * op)
+telco_collect_process_info_from_kinfo (struct kinfo_proc * process, TelcoEnumerateProcessesOperation * op)
 {
-  FridaHostProcessInfo info = { 0, };
-  FridaScope scope = op->scope;
+  TelcoHostProcessInfo info = { 0, };
+  TelcoScope scope = op->scope;
   gboolean still_alive;
   gchar path[PROC_PIDPATHINFO_MAXSIZE];
 
   info.pid = process->kp_proc.p_pid;
 
-  info.parameters = frida_make_parameters_dict ();
+  info.parameters = telco_make_parameters_dict ();
 
-  if (scope != FRIDA_SCOPE_MINIMAL)
-    frida_add_process_metadata (info.parameters, process);
+  if (scope != TELCO_SCOPE_MINIMAL)
+    telco_add_process_metadata (info.parameters, process);
 
 #if defined (HAVE_MACOS)
   {
@@ -381,23 +381,23 @@ frida_collect_process_info_from_kinfo (struct kinfo_proc * process, FridaEnumera
       if (name.length > 0)
         info.name = g_strdup (name.UTF8String);
 
-      if (scope != FRIDA_SCOPE_MINIMAL)
+      if (scope != TELCO_SCOPE_MINIMAL)
       {
         NSString * identifier = app.bundleIdentifier;
         if (identifier != nil)
-          frida_add_app_id (info.parameters, identifier);
+          telco_add_app_id (info.parameters, identifier);
 
         if (app.active)
           g_hash_table_insert (info.parameters, g_strdup ("frontmost"), g_variant_ref_sink (g_variant_new_boolean (TRUE)));
       }
 
-      if (scope == FRIDA_SCOPE_FULL)
-        frida_add_app_icons (info.parameters, app.icon);
+      if (scope == TELCO_SCOPE_FULL)
+        telco_add_app_icons (info.parameters, app.icon);
     }
   }
 #elif defined (HAVE_IOS) || defined (HAVE_TVOS)
   {
-    FridaSpringboardApi * api = op->api;
+    TelcoSpringboardApi * api = op->api;
     NSString * identifier;
 
     identifier = api->SBSCopyDisplayIdentifierForProcessID (info.pid);
@@ -409,15 +409,15 @@ frida_collect_process_info_from_kinfo (struct kinfo_proc * process, FridaEnumera
       info.name = g_strdup ([app_name UTF8String]);
       [app_name release];
 
-      if (scope != FRIDA_SCOPE_MINIMAL)
+      if (scope != TELCO_SCOPE_MINIMAL)
       {
-        frida_add_app_id (info.parameters, identifier);
+        telco_add_app_id (info.parameters, identifier);
 
-        frida_add_app_state (info.parameters, info.pid, api);
+        telco_add_app_state (info.parameters, info.pid, api);
       }
 
-      if (scope == FRIDA_SCOPE_FULL)
-        frida_add_app_icons (info.parameters, identifier);
+      if (scope == TELCO_SCOPE_FULL)
+        telco_add_app_icons (info.parameters, identifier);
 
       [identifier release];
     }
@@ -430,24 +430,24 @@ frida_collect_process_info_from_kinfo (struct kinfo_proc * process, FridaEnumera
     if (info.name == NULL)
       info.name = g_path_get_basename (path);
 
-    if (scope != FRIDA_SCOPE_MINIMAL)
+    if (scope != TELCO_SCOPE_MINIMAL)
       g_hash_table_insert (info.parameters, g_strdup ("path"), g_variant_ref_sink (g_variant_new_string (path)));
   }
 
   if (still_alive)
     g_array_append_val (op->result, info);
   else
-    frida_host_process_info_destroy (&info);
+    telco_host_process_info_destroy (&info);
 }
 
 void
-frida_system_kill (guint pid)
+telco_system_kill (guint pid)
 {
   kill (pid, SIGKILL);
 }
 
 gchar *
-frida_temporary_directory_get_system_tmp (void)
+telco_temporary_directory_get_system_tmp (void)
 {
   if (geteuid () == 0)
   {
@@ -462,7 +462,7 @@ frida_temporary_directory_get_system_tmp (void)
   {
 #ifdef HAVE_MACOS
     /* Mac App Store apps are sandboxed but able to read ~/.Trash/ */
-    return g_build_filename (g_get_home_dir (), ".Trash", ".frida", NULL);
+    return g_build_filename (g_get_home_dir (), ".Trash", ".telco", NULL);
 #else
     return g_strdup (g_get_tmp_dir ());
 #endif
@@ -472,7 +472,7 @@ frida_temporary_directory_get_system_tmp (void)
 #if defined (HAVE_MACOS) || defined (HAVE_IOS) || defined (HAVE_TVOS)
 
 static void
-frida_add_app_id (GHashTable * parameters, NSString * identifier)
+telco_add_app_id (GHashTable * parameters, NSString * identifier)
 {
   GVariantBuilder builder;
 
@@ -486,7 +486,7 @@ frida_add_app_id (GHashTable * parameters, NSString * identifier)
 #if defined (HAVE_MACOS)
 
 static void
-frida_add_app_icons (GHashTable * parameters, NSImage * image)
+telco_add_app_icons (GHashTable * parameters, NSImage * image)
 {
   GVariantBuilder builder;
   const guint sizes[] = { 16, 32 };
@@ -544,7 +544,7 @@ frida_add_app_icons (GHashTable * parameters, NSImage * image)
 #elif defined (HAVE_IOS) || defined (HAVE_TVOS)
 
 static void
-frida_add_app_metadata (GHashTable * parameters, NSString * identifier, FridaSpringboardApi * api)
+telco_add_app_metadata (GHashTable * parameters, NSString * identifier, TelcoSpringboardApi * api)
 {
   LSApplicationProxy * app;
   const char * version, * build, * data_path;
@@ -588,7 +588,7 @@ frida_add_app_metadata (GHashTable * parameters, NSString * identifier, FridaSpr
 }
 
 static void
-frida_add_app_state (GHashTable * parameters, guint pid, FridaSpringboardApi * api)
+telco_add_app_state (GHashTable * parameters, guint pid, TelcoSpringboardApi * api)
 {
   NSDictionary * info;
   NSNumber * is_frontmost;
@@ -603,12 +603,12 @@ frida_add_app_state (GHashTable * parameters, guint pid, FridaSpringboardApi * a
 }
 
 static void
-frida_add_app_icons (GHashTable * parameters, NSString * identifier)
+telco_add_app_icons (GHashTable * parameters, NSString * identifier)
 {
   NSData * png;
   GVariantBuilder builder;
 
-  png = _frida_get_springboard_api ()->SBSCopyIconImagePNGDataForDisplayIdentifier (identifier);
+  png = _telco_get_springboard_api ()->SBSCopyIconImagePNGDataForDisplayIdentifier (identifier);
   if (png == nil)
     return;
 
@@ -626,12 +626,12 @@ frida_add_app_icons (GHashTable * parameters, NSString * identifier)
 #endif /* HAVE_IOS */
 
 static void
-frida_add_process_metadata (GHashTable * parameters, const struct kinfo_proc * process)
+telco_add_process_metadata (GHashTable * parameters, const struct kinfo_proc * process)
 {
   const struct timeval * started = &process->kp_proc.p_un.__p_starttime;
   GDateTime * t0, * t1;
 
-  g_hash_table_insert (parameters, g_strdup ("user"), frida_uid_to_name (process->kp_eproc.e_ucred.cr_uid));
+  g_hash_table_insert (parameters, g_strdup ("user"), telco_uid_to_name (process->kp_eproc.e_ucred.cr_uid));
 
   g_hash_table_insert (parameters, g_strdup ("ppid"), g_variant_ref_sink (g_variant_new_int64 (process->kp_eproc.e_ppid)));
 
@@ -643,7 +643,7 @@ frida_add_process_metadata (GHashTable * parameters, const struct kinfo_proc * p
 }
 
 static struct kinfo_proc *
-frida_system_query_kinfo_procs (guint * count)
+telco_system_query_kinfo_procs (guint * count)
 {
   struct kinfo_proc * processes = NULL;
   int mib[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
@@ -685,7 +685,7 @@ sysctl_failed:
 }
 
 static GVariant *
-frida_uid_to_name (uid_t uid)
+telco_uid_to_name (uid_t uid)
 {
   GVariant * name;
   static size_t buffer_size = 0;

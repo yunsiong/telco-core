@@ -1,2 +1,2 @@
 [resource-compiler]
-namespace = Frida.Data.Helper
+namespace = Telco.Data.Helper

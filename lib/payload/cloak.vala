@@ -1,8 +1,8 @@
-namespace Frida {
+namespace Telco {
 	public class ThreadIgnoreScope {
 		public enum Kind {
 			APPLICATION_THREAD,
-			FRIDA_THREAD
+			TELCO_THREAD
 		}
 
 		private Kind kind;
@@ -20,7 +20,7 @@ namespace Frida {
 			interceptor = Gum.Interceptor.obtain ();
 			interceptor.ignore_current_thread ();
 
-			if (kind == FRIDA_THREAD) {
+			if (kind == TELCO_THREAD) {
 				thread_id = Gum.Process.get_current_thread_id ();
 				Gum.Cloak.add_thread (thread_id);
 
@@ -31,7 +31,7 @@ namespace Frida {
 		}
 
 		~ThreadIgnoreScope () {
-			if (kind == FRIDA_THREAD) {
+			if (kind == TELCO_THREAD) {
 				for (var i = 0; i != num_ranges; i++)
 					Gum.Cloak.remove_range (ranges[i]);
 

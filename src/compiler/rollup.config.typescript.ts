@@ -2,7 +2,7 @@ import path from "path";
 import { defineConfig } from "rollup";
 
 export default defineConfig({
-    input: path.join("node_modules", "frida-compile", "ext", "typescript.js"),
+    input: path.join("node_modules", "telco-compile", "ext", "typescript.js"),
     output: {
         file: "typescript.js",
         format: "umd",

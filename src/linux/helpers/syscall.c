@@ -1,7 +1,7 @@
 #include "syscall.h"
 
 ssize_t
-frida_syscall_4 (size_t n, size_t a, size_t b, size_t c, size_t d)
+telco_syscall_4 (size_t n, size_t a, size_t b, size_t c, size_t d)
 {
   ssize_t result;
 

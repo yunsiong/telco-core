@@ -1,47 +1,47 @@
-#include "frida-core.h"
+#include "telco-core.h"
 
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/procfs.h>
 
-typedef struct _FridaEnumerateProcessesOperation FridaEnumerateProcessesOperation;
+typedef struct _TelcoEnumerateProcessesOperation TelcoEnumerateProcessesOperation;
 
-struct _FridaEnumerateProcessesOperation
+struct _TelcoEnumerateProcessesOperation
 {
-  FridaScope scope;
+  TelcoScope scope;
   GArray * result;
 };
 
-static void frida_collect_process_info (guint pid, FridaEnumerateProcessesOperation * op);
+static void telco_collect_process_info (guint pid, TelcoEnumerateProcessesOperation * op);
 
 void
-frida_system_get_frontmost_application (FridaFrontmostQueryOptions * options, FridaHostApplicationInfo * result, GError ** error)
+telco_system_get_frontmost_application (TelcoFrontmostQueryOptions * options, TelcoHostApplicationInfo * result, GError ** error)
 {
   g_set_error (error,
-      FRIDA_ERROR,
-      FRIDA_ERROR_NOT_SUPPORTED,
+      TELCO_ERROR,
+      TELCO_ERROR_NOT_SUPPORTED,
       "Not implemented");
 }
 
-FridaHostApplicationInfo *
-frida_system_enumerate_applications (FridaApplicationQueryOptions * options, int * result_length)
+TelcoHostApplicationInfo *
+telco_system_enumerate_applications (TelcoApplicationQueryOptions * options, int * result_length)
 {
   *result_length = 0;
 
   return NULL;
 }
 
-FridaHostProcessInfo *
-frida_system_enumerate_processes (FridaProcessQueryOptions * options, int * result_length)
+TelcoHostProcessInfo *
+telco_system_enumerate_processes (TelcoProcessQueryOptions * options, int * result_length)
 {
-  FridaEnumerateProcessesOperation op;
+  TelcoEnumerateProcessesOperation op;
 
-  op.scope = frida_process_query_options_get_scope (options);
-  op.result = g_array_new (FALSE, FALSE, sizeof (FridaHostProcessInfo));
+  op.scope = telco_process_query_options_get_scope (options);
+  op.result = g_array_new (FALSE, FALSE, sizeof (TelcoHostProcessInfo));
 
-  if (frida_process_query_options_has_selected_pids (options))
+  if (telco_process_query_options_has_selected_pids (options))
   {
-    frida_process_query_options_enumerate_selected_pids (options, (GFunc) frida_collect_process_info, &op);
+    telco_process_query_options_enumerate_selected_pids (options, (GFunc) telco_collect_process_info, &op);
   }
   else
   {
@@ -57,7 +57,7 @@ frida_system_enumerate_processes (FridaProcessQueryOptions * options, int * resu
 
       pid = strtoul (proc_name, &end, 10);
       if (*end == '\0')
-        frida_collect_process_info (pid, &op);
+        telco_collect_process_info (pid, &op);
     }
 
     g_dir_close (proc_dir);
@@ -65,13 +65,13 @@ frida_system_enumerate_processes (FridaProcessQueryOptions * options, int * resu
 
   *result_length = op.result->len;
 
-  return (FridaHostProcessInfo *) g_array_free (op.result, FALSE);
+  return (TelcoHostProcessInfo *) g_array_free (op.result, FALSE);
 }
 
 static void
-frida_collect_process_info (guint pid, FridaEnumerateProcessesOperation * op)
+telco_collect_process_info (guint pid, TelcoEnumerateProcessesOperation * op)
 {
-  FridaHostProcessInfo info = { 0, };
+  TelcoHostProcessInfo info = { 0, };
   gchar * as_path;
   gint fd;
   static struct
@@ -92,9 +92,9 @@ frida_collect_process_info (guint pid, FridaEnumerateProcessesOperation * op)
   info.pid = pid;
   info.name = g_path_get_basename (procfs_name.info.path);
 
-  info.parameters = frida_make_parameters_dict ();
+  info.parameters = telco_make_parameters_dict ();
 
-  if (op->scope != FRIDA_SCOPE_MINIMAL)
+  if (op->scope != TELCO_SCOPE_MINIMAL)
   {
     g_hash_table_insert (info.parameters, g_strdup ("path"), g_variant_ref_sink (g_variant_new_string (procfs_name.info.path)));
   }
@@ -109,13 +109,13 @@ beach:
 }
 
 void
-frida_system_kill (guint pid)
+telco_system_kill (guint pid)
 {
   kill (pid, SIGKILL);
 }
 
 gchar *
-frida_temporary_directory_get_system_tmp (void)
+telco_temporary_directory_get_system_tmp (void)
 {
   return g_strdup (g_get_tmp_dir ());
 }

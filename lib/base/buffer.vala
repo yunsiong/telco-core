@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class BufferBuilder : Object {
 		public uint pointer_size {
 			get;

@@ -1,16 +1,16 @@
 #include "inject-glue.h"
 
-#include "frida-core.h"
+#include "telco-core.h"
 #ifdef HAVE_ANDROID
-# include "frida-selinux.h"
+# include "telco-selinux.h"
 #endif
 
 void
-frida_inject_environment_init (void)
+telco_inject_environment_init (void)
 {
-  frida_init_with_runtime (FRIDA_RUNTIME_GLIB);
+  telco_init_with_runtime (TELCO_RUNTIME_GLIB);
 
 #ifdef HAVE_ANDROID
-  frida_selinux_patch_policy ();
+  telco_selinux_patch_policy ();
 #endif
 }

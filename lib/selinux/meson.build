@@ -1,15 +1,15 @@
-frida_selinux_incdir = include_directories('.')
+telco_selinux_incdir = include_directories('.')
 
-install_headers('frida-selinux.h', subdir: 'frida-' + api_version)
+install_headers('telco-selinux.h', subdir: 'telco-' + api_version)
 
-frida_selinux = static_library('frida-selinux', 'patch.c',
-  c_args: frida_component_cflags,
+telco_selinux = static_library('telco-selinux', 'patch.c',
+  c_args: telco_component_cflags,
   dependencies: [glib_dep, libselinux_dep, libsepol_dep],
 )
 
-frida_selinux_dep = declare_dependency(
-  include_directories: frida_selinux_incdir,
-  link_with: frida_selinux,
+telco_selinux_dep = declare_dependency(
+  include_directories: telco_selinux_incdir,
+  link_with: telco_selinux,
 )
 
-frida_selinux_vala_args = ['--pkg=libselinux']
+telco_selinux_vala_args = ['--pkg=libselinux']

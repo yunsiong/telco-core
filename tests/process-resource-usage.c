@@ -1,9 +1,9 @@
-#include "frida-tests.h"
+#include "telco-tests.h"
 
 #ifdef HAVE_WINDOWS
 # include <windows.h>
 # include <psapi.h>
-typedef HANDLE FridaProcessHandle;
+typedef HANDLE TelcoProcessHandle;
 #elif defined (HAVE_DARWIN)
 # if defined (HAVE_IOS) || defined (HAVE_TVOS)
 #  define PROC_PIDLISTFDS 1
@@ -19,24 +19,24 @@ int proc_pid_rusage (int pid, int flavor, rusage_info_t * buffer);
 #  include <libproc.h>
 # endif
 # include <mach/mach.h>
-typedef mach_port_t FridaProcessHandle;
+typedef mach_port_t TelcoProcessHandle;
 #else
-typedef gpointer FridaProcessHandle;
+typedef gpointer TelcoProcessHandle;
 #endif
 
-typedef struct _FridaMetricCollectorEntry FridaMetricCollectorEntry;
-typedef guint (* FridaMetricCollector) (guint pid, FridaProcessHandle handle);
+typedef struct _TelcoMetricCollectorEntry TelcoMetricCollectorEntry;
+typedef guint (* TelcoMetricCollector) (guint pid, TelcoProcessHandle handle);
 
-struct _FridaMetricCollectorEntry
+struct _TelcoMetricCollectorEntry
 {
   const gchar * name;
-  FridaMetricCollector collect;
+  TelcoMetricCollector collect;
 };
 
 #ifdef HAVE_WINDOWS
 
-static FridaProcessHandle
-frida_open_process (guint pid, guint * real_pid)
+static TelcoProcessHandle
+telco_open_process (guint pid, guint * real_pid)
 {
   HANDLE process;
 
@@ -58,14 +58,14 @@ frida_open_process (guint pid, guint * real_pid)
 }
 
 static void
-frida_close_process (FridaProcessHandle process, guint pid)
+telco_close_process (TelcoProcessHandle process, guint pid)
 {
   if (pid != 0)
     CloseHandle (process);
 }
 
 static guint
-frida_collect_memory_footprint (guint pid, FridaProcessHandle process)
+telco_collect_memory_footprint (guint pid, TelcoProcessHandle process)
 {
   PROCESS_MEMORY_COUNTERS_EX counters;
   BOOL success;
@@ -77,7 +77,7 @@ frida_collect_memory_footprint (guint pid, FridaProcessHandle process)
 }
 
 static guint
-frida_collect_handles (guint pid, FridaProcessHandle process)
+telco_collect_handles (guint pid, TelcoProcessHandle process)
 {
   DWORD count;
   BOOL success;
@@ -92,8 +92,8 @@ frida_collect_handles (guint pid, FridaProcessHandle process)
 
 #ifdef HAVE_DARWIN
 
-static FridaProcessHandle
-frida_open_process (guint pid, guint * real_pid)
+static TelcoProcessHandle
+telco_open_process (guint pid, guint * real_pid)
 {
   mach_port_t task;
 
@@ -115,7 +115,7 @@ frida_open_process (guint pid, guint * real_pid)
 }
 
 static void
-frida_close_process (FridaProcessHandle process, guint pid)
+telco_close_process (TelcoProcessHandle process, guint pid)
 {
   if (pid != 0)
   {
@@ -125,7 +125,7 @@ frida_close_process (FridaProcessHandle process, guint pid)
 }
 
 static guint
-frida_collect_memory_footprint (guint pid, FridaProcessHandle process)
+telco_collect_memory_footprint (guint pid, TelcoProcessHandle process)
 {
   struct rusage_info_v2 info;
   int res;
@@ -137,7 +137,7 @@ frida_collect_memory_footprint (guint pid, FridaProcessHandle process)
 }
 
 static guint
-frida_collect_mach_ports (guint pid, FridaProcessHandle process)
+telco_collect_mach_ports (guint pid, TelcoProcessHandle process)
 {
   kern_return_t kr;
   ipc_info_space_basic_t info;
@@ -149,7 +149,7 @@ frida_collect_mach_ports (guint pid, FridaProcessHandle process)
 }
 
 static guint
-frida_collect_file_descriptors (guint pid, FridaProcessHandle process)
+telco_collect_file_descriptors (guint pid, TelcoProcessHandle process)
 {
   return proc_pidinfo (pid, PROC_PIDLISTFDS, 0, NULL, 0) / PROC_PIDLISTFD_SIZE;
 }
@@ -158,8 +158,8 @@ frida_collect_file_descriptors (guint pid, FridaProcessHandle process)
 
 #ifdef HAVE_LINUX
 
-static FridaProcessHandle
-frida_open_process (guint pid, guint * real_pid)
+static TelcoProcessHandle
+telco_open_process (guint pid, guint * real_pid)
 {
   *real_pid = (pid != 0) ? pid : getpid ();
 
@@ -167,12 +167,12 @@ frida_open_process (guint pid, guint * real_pid)
 }
 
 static void
-frida_close_process (FridaProcessHandle process, guint pid)
+telco_close_process (TelcoProcessHandle process, guint pid)
 {
 }
 
 static guint
-frida_collect_memory_footprint (guint pid, FridaProcessHandle process)
+telco_collect_memory_footprint (guint pid, TelcoProcessHandle process)
 {
   gchar * path, * stats;
   gboolean success;
@@ -192,7 +192,7 @@ frida_collect_memory_footprint (guint pid, FridaProcessHandle process)
 }
 
 static guint
-frida_collect_file_descriptors (guint pid, FridaProcessHandle process)
+telco_collect_file_descriptors (guint pid, TelcoProcessHandle process)
 {
   gchar * path;
   GDir * dir;
@@ -218,8 +218,8 @@ frida_collect_file_descriptors (guint pid, FridaProcessHandle process)
 
 #if defined (HAVE_QNX) || defined (HAVE_FREEBSD)
 
-static FridaProcessHandle
-frida_open_process (guint pid, guint * real_pid)
+static TelcoProcessHandle
+telco_open_process (guint pid, guint * real_pid)
 {
   *real_pid = (pid != 0) ? pid : getpid ();
 
@@ -227,43 +227,43 @@ frida_open_process (guint pid, guint * real_pid)
 }
 
 static void
-frida_close_process (FridaProcessHandle process, guint pid)
+telco_close_process (TelcoProcessHandle process, guint pid)
 {
 }
 
 #endif
 
-static const FridaMetricCollectorEntry frida_metric_collectors[] =
+static const TelcoMetricCollectorEntry telco_metric_collectors[] =
 {
 #ifdef HAVE_WINDOWS
-  { "memory", frida_collect_memory_footprint },
-  { "handles", frida_collect_handles },
+  { "memory", telco_collect_memory_footprint },
+  { "handles", telco_collect_handles },
 #endif
 #ifdef HAVE_DARWIN
-  { "memory", frida_collect_memory_footprint },
-  { "ports", frida_collect_mach_ports },
-  { "files", frida_collect_file_descriptors },
+  { "memory", telco_collect_memory_footprint },
+  { "ports", telco_collect_mach_ports },
+  { "files", telco_collect_file_descriptors },
 #endif
 #ifdef HAVE_LINUX
-  { "memory", frida_collect_memory_footprint },
-  { "files", frida_collect_file_descriptors },
+  { "memory", telco_collect_memory_footprint },
+  { "files", telco_collect_file_descriptors },
 #endif
   { NULL, NULL }
 };
 
-FridaTestResourceUsageSnapshot *
-frida_test_resource_usage_snapshot_create_for_pid (guint pid)
+TelcoTestResourceUsageSnapshot *
+telco_test_resource_usage_snapshot_create_for_pid (guint pid)
 {
-  FridaTestResourceUsageSnapshot * snapshot;
-  FridaProcessHandle process;
+  TelcoTestResourceUsageSnapshot * snapshot;
+  TelcoProcessHandle process;
   guint real_pid;
-  const FridaMetricCollectorEntry * entry;
+  const TelcoMetricCollectorEntry * entry;
 
-  snapshot = frida_test_resource_usage_snapshot_new ();
+  snapshot = telco_test_resource_usage_snapshot_new ();
 
-  process = frida_open_process (pid, &real_pid);
+  process = telco_open_process (pid, &real_pid);
 
-  for (entry = frida_metric_collectors; entry->name != NULL; entry++)
+  for (entry = telco_metric_collectors; entry->name != NULL; entry++)
   {
     guint value;
 
@@ -272,7 +272,7 @@ frida_test_resource_usage_snapshot_create_for_pid (guint pid)
     g_hash_table_insert (snapshot->metrics, g_strdup (entry->name), GSIZE_TO_POINTER (value));
   }
 
-  frida_close_process (process, pid);
+  telco_close_process (process, pid);
 
   return snapshot;
 }

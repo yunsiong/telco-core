@@ -4,16 +4,16 @@
 #include <mach-o/dyld_images.h>
 #include <stdbool.h>
 
-typedef struct _FridaLibdyldApi FridaLibdyldApi;
-typedef struct _FridaMachO FridaMachO;
+typedef struct _TelcoLibdyldApi TelcoLibdyldApi;
+typedef struct _TelcoMachO TelcoMachO;
 
-struct _FridaLibdyldApi
+struct _TelcoLibdyldApi
 {
   void * (* dlopen) (const char * path, int mode);
   void * (* dlsym) (void * handle, const char * symbol);
 };
 
-struct _FridaMachO
+struct _TelcoMachO
 {
   const void * base;
   uintptr_t slide;
@@ -21,23 +21,23 @@ struct _FridaMachO
   const void * exports;
 };
 
-static void frida_get_libdyld_api (const struct dyld_all_image_infos * all_image_info, FridaLibdyldApi * api);
-static void frida_parse_macho (const void * macho, FridaMachO * result);
-static const void * frida_find_libdyld (const struct dyld_all_image_infos * all_image_info);
-static uint64_t frida_exports_trie_find (const uint8_t * exports, const char * name);
-uint64_t frida_read_uleb128 (const uint8_t ** data);
+static void telco_get_libdyld_api (const struct dyld_all_image_infos * all_image_info, TelcoLibdyldApi * api);
+static void telco_parse_macho (const void * macho, TelcoMachO * result);
+static const void * telco_find_libdyld (const struct dyld_all_image_infos * all_image_info);
+static uint64_t telco_exports_trie_find (const uint8_t * exports, const char * name);
+uint64_t telco_read_uleb128 (const uint8_t ** data);
 
-static bool frida_str_equals (const char * str, const char * other);
+static bool telco_str_equals (const char * str, const char * other);
 
 void
-frida_resolve_symbols (const char ** input_vector, void ** output_vector, const struct dyld_all_image_infos * all_image_info)
+telco_resolve_symbols (const char ** input_vector, void ** output_vector, const struct dyld_all_image_infos * all_image_info)
 {
-  FridaLibdyldApi api;
+  TelcoLibdyldApi api;
   const char ** input;
   void ** output;
   const char * module_name;
 
-  frida_get_libdyld_api (all_image_info, &api);
+  telco_get_libdyld_api (all_image_info, &api);
 
   input = input_vector;
   output = output_vector;
@@ -61,18 +61,18 @@ frida_resolve_symbols (const char ** input_vector, void ** output_vector, const 
 }
 
 static void
-frida_get_libdyld_api (const struct dyld_all_image_infos * all_image_info, FridaLibdyldApi * api)
+telco_get_libdyld_api (const struct dyld_all_image_infos * all_image_info, TelcoLibdyldApi * api)
 {
-  FridaMachO libdyld;
+  TelcoMachO libdyld;
 
-  frida_parse_macho (frida_find_libdyld (all_image_info), &libdyld);
+  telco_parse_macho (telco_find_libdyld (all_image_info), &libdyld);
 
-  api->dlopen = libdyld.base + frida_exports_trie_find (libdyld.exports, "_dlopen");
-  api->dlsym = libdyld.base + frida_exports_trie_find (libdyld.exports, "_dlsym");
+  api->dlopen = libdyld.base + telco_exports_trie_find (libdyld.exports, "_dlopen");
+  api->dlsym = libdyld.base + telco_exports_trie_find (libdyld.exports, "_dlsym");
 }
 
 static const void *
-frida_find_libdyld (const struct dyld_all_image_infos * all_image_info)
+telco_find_libdyld (const struct dyld_all_image_infos * all_image_info)
 {
   uint32_t i;
 
@@ -80,7 +80,7 @@ frida_find_libdyld (const struct dyld_all_image_infos * all_image_info)
   {
     const struct dyld_image_info * image = &all_image_info->infoArray[i];
 
-    if (frida_str_equals (image->imageFilePath, "/usr/lib/system/libdyld.dylib"))
+    if (telco_str_equals (image->imageFilePath, "/usr/lib/system/libdyld.dylib"))
     {
       return image->imageLoadAddress;
     }
@@ -90,7 +90,7 @@ frida_find_libdyld (const struct dyld_all_image_infos * all_image_info)
 }
 
 static void
-frida_parse_macho (const void * macho, FridaMachO * result)
+telco_parse_macho (const void * macho, TelcoMachO * result)
 {
   const struct mach_header_64 * header;
   const struct load_command * lc;
@@ -116,9 +116,9 @@ frida_parse_macho (const void * macho, FridaMachO * result)
       {
         const struct segment_command_64 * sc = (const struct segment_command_64 *) lc;
 
-        if (frida_str_equals (sc->segname, "__TEXT"))
+        if (telco_str_equals (sc->segname, "__TEXT"))
           preferred_base = (const void *) sc->vmaddr;
-        else if (frida_str_equals (sc->segname, "__LINKEDIT"))
+        else if (telco_str_equals (sc->segname, "__LINKEDIT"))
           linkedit = (const void *) sc->vmaddr - sc->fileoff;
 
         break;
@@ -155,7 +155,7 @@ frida_parse_macho (const void * macho, FridaMachO * result)
 }
 
 static uint64_t
-frida_exports_trie_find (const uint8_t * exports, const char * name)
+telco_exports_trie_find (const uint8_t * exports, const char * name)
 {
   const char * s;
   const uint8_t * p;
@@ -169,15 +169,15 @@ frida_exports_trie_find (const uint8_t * exports, const char * name)
     uint8_t child_count, i;
     uint64_t node_offset;
 
-    terminal_size = frida_read_uleb128 (&p);
+    terminal_size = telco_read_uleb128 (&p);
 
     if (*s == '\0' && terminal_size != 0)
     {
       /* Skip flags. */
-      frida_read_uleb128 (&p);
+      telco_read_uleb128 (&p);
 
       /* Assume it's a plain export. */
-      return frida_read_uleb128 (&p);
+      return telco_read_uleb128 (&p);
     }
 
     children = p + terminal_size;
@@ -205,13 +205,13 @@ frida_exports_trie_find (const uint8_t * exports, const char * name)
 
       if (matching_edge)
       {
-        node_offset = frida_read_uleb128 (&p);
+        node_offset = telco_read_uleb128 (&p);
         s = symbol_cur;
         break;
       }
       else
       {
-        frida_read_uleb128 (&p);
+        telco_read_uleb128 (&p);
       }
     }
 
@@ -225,7 +225,7 @@ frida_exports_trie_find (const uint8_t * exports, const char * name)
 }
 
 uint64_t
-frida_read_uleb128 (const uint8_t ** data)
+telco_read_uleb128 (const uint8_t ** data)
 {
   const uint8_t * p = *data;
   uint64_t result = 0;
@@ -247,7 +247,7 @@ frida_read_uleb128 (const uint8_t ** data)
 }
 
 static bool
-frida_str_equals (const char * str, const char * other)
+telco_str_equals (const char * str, const char * other)
 {
   char a, b;
 
@@ -299,7 +299,7 @@ main (void)
 
   dyld_info = (const struct dyld_all_image_infos *) info.all_image_info_addr;
 
-  frida_resolve_symbols (input_vector, output_vector, dyld_info);
+  telco_resolve_symbols (input_vector, output_vector, dyld_info);
 
   printf ("open=%p, correct=%p\n", output_vector[0], dlsym (RTLD_DEFAULT, "open"));
   printf ("close=%p, correct=%p\n", output_vector[1], dlsym (RTLD_DEFAULT, "close"));

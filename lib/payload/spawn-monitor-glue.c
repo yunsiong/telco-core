@@ -1,33 +1,33 @@
-#include "frida-payload.h"
+#include "telco-payload.h"
 
 #ifdef HAVE_WINDOWS
 
 # define VC_EXTRALEAN
 # include <windows.h>
 
-static gchar * frida_ansi_string_to_utf8 (const gchar * str_ansi, gint length);
+static gchar * telco_ansi_string_to_utf8 (const gchar * str_ansi, gint length);
 
 guint32
-_frida_spawn_monitor_resume_thread (void * thread)
+_telco_spawn_monitor_resume_thread (void * thread)
 {
   return ResumeThread (thread);
 }
 
 gchar **
-_frida_spawn_monitor_get_environment (int * length)
+_telco_spawn_monitor_get_environment (int * length)
 {
   gchar ** result;
   LPWCH strings;
 
   strings = GetEnvironmentStringsW ();
-  result = _frida_spawn_monitor_parse_unicode_environment (strings, length);
+  result = _telco_spawn_monitor_parse_unicode_environment (strings, length);
   FreeEnvironmentStringsW (strings);
 
   return result;
 }
 
 gchar **
-_frida_spawn_monitor_parse_unicode_environment (void * env, int * length)
+_telco_spawn_monitor_parse_unicode_environment (void * env, int * length)
 {
   GPtrArray * result;
   WCHAR * element_data;
@@ -50,7 +50,7 @@ _frida_spawn_monitor_parse_unicode_environment (void * env, int * length)
 }
 
 gchar **
-_frida_spawn_monitor_parse_ansi_environment (void * env, int * length)
+_telco_spawn_monitor_parse_ansi_environment (void * env, int * length)
 {
   GPtrArray * result;
   gchar * element_data;
@@ -61,7 +61,7 @@ _frida_spawn_monitor_parse_ansi_environment (void * env, int * length)
   element_data = env;
   while ((element_length = strlen (element_data)) != 0)
   {
-    g_ptr_array_add (result, frida_ansi_string_to_utf8 (element_data, element_length));
+    g_ptr_array_add (result, telco_ansi_string_to_utf8 (element_data, element_length));
     element_data += element_length + 1;
   }
 
@@ -73,7 +73,7 @@ _frida_spawn_monitor_parse_ansi_environment (void * env, int * length)
 }
 
 static gchar *
-frida_ansi_string_to_utf8 (const gchar * str_ansi, gint length)
+telco_ansi_string_to_utf8 (const gchar * str_ansi, gint length)
 {
   guint str_utf16_size;
   WCHAR * str_utf16;

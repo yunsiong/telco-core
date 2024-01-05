@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public abstract class BaseAgentSession : Object, AgentSession {
 		public signal void closed ();
 		public signal void script_eternalized (Gum.Script script);
@@ -23,7 +23,7 @@ namespace Frida {
 			set { transmitter.message_sink = value; }
 		}
 
-		public MainContext frida_context {
+		public MainContext telco_context {
 			get;
 			construct;
 		}
@@ -43,14 +43,14 @@ namespace Frida {
 
 		construct {
 			assert (invader != null);
-			assert (frida_context != null);
+			assert (telco_context != null);
 			assert (dbus_context != null);
 
 			script_engine = new ScriptEngine (invader);
 			script_engine.message_from_script.connect (on_message_from_script);
 			script_engine.message_from_debugger.connect (on_message_from_debugger);
 
-			transmitter = new AgentMessageTransmitter (persist_timeout, frida_context, dbus_context);
+			transmitter = new AgentMessageTransmitter (persist_timeout, telco_context, dbus_context);
 			transmitter.closed.connect (on_transmitter_closed);
 			transmitter.new_candidates.connect (on_transmitter_new_candidates);
 			transmitter.candidate_gathering_done.connect (on_transmitter_candidate_gathering_done);

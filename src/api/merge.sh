@@ -9,7 +9,7 @@ shift 4
 if [ -n "$libtool_binary" ]; then
   exec "$libtool_binary" -static -o "$output_lib" "$@"
 else
-  priv_dir="$build_dir/frida-core-library@mrg"
+  priv_dir="$build_dir/telco-core-library@mrg"
   mri_script="$priv_dir/merge.mri"
 
   mkdir -p "$priv_dir"

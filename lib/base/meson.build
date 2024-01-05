@@ -16,10 +16,10 @@ if host_os_family != 'windows'
   extra_deps += [gio_unix_dep]
 endif
 
-base = static_library('frida-base-' + api_version, base_sources,
-  c_args: frida_component_cflags,
-  vala_header: 'frida-base.h',
-  vala_vapi: f'frida-base-@api_version@.vapi',
+base = static_library('telco-base-' + api_version, base_sources,
+  c_args: telco_component_cflags,
+  vala_header: 'telco-base.h',
+  vala_vapi: f'telco-base-@api_version@.vapi',
   dependencies: [glib_dep, gobject_dep, gio_dep, libsoup_dep, nice_dep, usrsctp_dep, gee_dep, json_glib_dep, gum_dep, openssl_dep] + extra_deps,
   install: true,
   install_dir: [true, header_install_dir, true],
@@ -35,5 +35,5 @@ base_build_dir = meson.current_build_dir()
 
 pkg = import('pkgconfig')
 pkg.generate(base,
-  description: 'Frida base library',
+  description: 'Telco base library',
 )

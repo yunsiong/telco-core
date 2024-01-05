@@ -1,7 +1,7 @@
 *.user
 /lib/xnu/build/
-/lib/xnu/FridaKernelAgent.xcodeproj/project.xcworkspace/xcuserdata/
-/lib/xnu/FridaKernelAgent.xcodeproj/xcuserdata/
+/lib/xnu/TelcoKernelAgent.xcodeproj/project.xcworkspace/xcuserdata/
+/lib/xnu/TelcoKernelAgent.xcodeproj/xcuserdata/
 /src/barebone/helpers/memory-scanner/target/
 /src/barebone/helpers/target/
 /src/barebone/node_modules/

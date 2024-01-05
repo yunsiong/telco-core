@@ -1,11 +1,11 @@
-#ifndef __FRIDA_DARWIN_ICON_HELPERS_H__
-#define __FRIDA_DARWIN_ICON_HELPERS_H__
+#ifndef __TELCO_DARWIN_ICON_HELPERS_H__
+#define __TELCO_DARWIN_ICON_HELPERS_H__
 
-#include "frida-core.h"
+#include "telco-core.h"
 
-typedef gpointer FridaNativeImage;
+typedef gpointer TelcoNativeImage;
 
-GVariant * _frida_icon_from_file (const gchar * filename, guint target_width, guint target_height);
-GVariant * _frida_icon_from_native_image_scaled_to (FridaNativeImage native_image, guint target_width, guint target_height);
+GVariant * _telco_icon_from_file (const gchar * filename, guint target_width, guint target_height);
+GVariant * _telco_icon_from_native_image_scaled_to (TelcoNativeImage native_image, guint target_width, guint target_height);
 
 #endif

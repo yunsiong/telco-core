@@ -1,4 +1,4 @@
-ENV := ../../../build/frida-env-android-arm64.rc
+ENV := ../../../build/telco-env-android-arm64.rc
 
 CC := $(shell source $(ENV) && echo $$CC)
 STRIP := $(shell source $(ENV) && echo $$STRIP)
@@ -39,7 +39,7 @@ $(eval $(call declare-executable,spawner,spawner-unix.c))
 %-agent-android-arm64.version:
 	echo "LABRAT_AGENT_ANDROID_ARM64_1.0 {" > $@.tmp
 	echo "  global:"             >> $@.tmp
-	echo "    frida_agent_main;" >> $@.tmp
+	echo "    telco_agent_main;" >> $@.tmp
 	echo ""                      >> $@.tmp
 	echo "  local:"              >> $@.tmp
 	echo "    *;"                >> $@.tmp

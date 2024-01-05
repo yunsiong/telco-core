@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public extern void run_atexit_handlers ();
 
 	public extern uint get_process_id ();

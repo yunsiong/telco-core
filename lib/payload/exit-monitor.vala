@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class ExitMonitor : Object, Gum.InvocationListener {
 		public weak ExitHandler handler {
 			get;

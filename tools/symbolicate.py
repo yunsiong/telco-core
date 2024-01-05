@@ -18,11 +18,11 @@ def main():
     parser.add_argument("--output", dest="output", required=True,
                         help="where the symbolicated DTrace stacks will be written")
     parser.add_argument("--test-log", dest="test_log", required=True,
-                        help="the test log file to use for resolving frida-agent code addresses")
+                        help="the test log file to use for resolving telco-agent code addresses")
     parser.add_argument("--v8-log", dest="v8_log", required=True,
                         help="the V8 log file to use for resolving code addresses")
     parser.add_argument("--agent", dest="agent", required=True,
-                        help="the frida-agent binary")
+                        help="the telco-agent binary")
     args = parser.parse_args()
 
     csv.field_size_limit(64 * 1024 * 1024)

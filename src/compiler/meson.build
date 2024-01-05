@@ -10,7 +10,7 @@ else
 endif
 compiler_mksnapshot = use_snapshot ? v8_mksnapshot : ''
 
-compiler_agent = custom_target('frida-compiler-agent',
+compiler_agent = custom_target('telco-compiler-agent',
   input: [
     'agent-entrypoint.js',
     'agent-core.ts',
@@ -35,22 +35,22 @@ compiler_agent = custom_target('frida-compiler-agent',
     compiler_mksnapshot,
   ],
 )
-compiler_data = custom_target('frida-data-compiler',
+compiler_data = custom_target('telco-data-compiler',
   input: [
     'compiler.resources',
     compiler_agent,
   ],
   output: [
-    'frida-data-compiler.vapi',
-    'frida-data-compiler.h',
-    'frida-data-compiler.c',
-    'frida-data-compiler-blob.S',
+    'telco-data-compiler.vapi',
+    'telco-data-compiler.h',
+    'telco-data-compiler.c',
+    'telco-data-compiler-blob.S',
   ],
   command: [
     resource_compiler,
     '--toolchain=' + host_toolchain,
     '-c', '@INPUT0@',
-    '-o', join_paths(meson.current_build_dir(), 'frida-data-compiler'),
+    '-o', join_paths(meson.current_build_dir(), 'telco-data-compiler'),
     '@INPUT1@',
     '@INPUT2@',
   ],

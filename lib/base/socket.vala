@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public const uint16 DEFAULT_CONTROL_PORT = 27042;
 	public const uint16 DEFAULT_CLUSTER_PORT = 27052;
 
@@ -104,7 +104,7 @@ namespace Frida {
 		var msg = new Soup.Message ("GET", uri);
 		Soup.websocket_client_prepare_handshake (msg, origin, null, null);
 		msg.request_headers.replace ("Host", canonical_host);
-		msg.request_headers.replace ("User-Agent", "Frida/" + _version_string ());
+		msg.request_headers.replace ("User-Agent", "Telco/" + _version_string ());
 		msg.request_headers.foreach ((name, val) => {
 			request.append (name + ": " + val + "\r\n");
 		});
@@ -147,7 +147,7 @@ namespace Frida {
 		}
 
 		WebConnection connection = null;
-		var frida_context = MainContext.ref_thread_default ();
+		var telco_context = MainContext.ref_thread_default ();
 		var dbus_context = yield get_dbus_context ();
 		var dbus_source = new IdleSource ();
 		dbus_source.set_callback (() => {
@@ -155,9 +155,9 @@ namespace Frida {
 				new List<Soup.WebsocketExtension> ());
 			connection = new WebConnection (websocket);
 
-			var frida_source = new IdleSource ();
-			frida_source.set_callback (negotiate_connection.callback);
-			frida_source.attach (frida_context);
+			var telco_source = new IdleSource ();
+			telco_source.set_callback (negotiate_connection.callback);
+			telco_source.attach (telco_context);
 
 			return false;
 		});
@@ -206,7 +206,7 @@ namespace Frida {
 
 		private Cancellable io_cancellable = new Cancellable ();
 
-		private MainContext? frida_context;
+		private MainContext? telco_context;
 		private MainContext? dbus_context;
 
 		public WebService (EndpointParameters endpoint_params, WebServiceFlavor flavor,
@@ -219,7 +219,7 @@ namespace Frida {
 		}
 
 		public async void start (Cancellable? cancellable) throws Error, IOError {
-			frida_context = MainContext.ref_thread_default ();
+			telco_context = MainContext.ref_thread_default ();
 			dbus_context = yield get_dbus_context ();
 
 			cancellable.set_error_if_cancelled ();
@@ -236,13 +236,13 @@ namespace Frida {
 		private async void handle_start_request (Promise<SocketAddress> start_request, Cancellable? cancellable) {
 			try {
 				SocketAddress effective_address = yield do_start (cancellable);
-				schedule_on_frida_thread (() => {
+				schedule_on_telco_thread (() => {
 					start_request.resolve (effective_address);
 					return false;
 				});
 			} catch (GLib.Error e) {
 				GLib.Error start_error = e;
-				schedule_on_frida_thread (() => {
+				schedule_on_telco_thread (() => {
 					start_request.reject (start_error);
 					return false;
 				});
@@ -367,14 +367,14 @@ namespace Frida {
 				assert_not_reached ();
 			}
 
-			schedule_on_frida_thread (() => {
+			schedule_on_telco_thread (() => {
 				incoming (peer, remote_address);
 				return false;
 			});
 		}
 
 		private void on_asset_request (Soup.Server server, Soup.ServerMessage msg, string path, HashTable<string, string>? query) {
-			msg.get_response_headers ().replace ("Server", "Frida/" + _version_string ());
+			msg.get_response_headers ().replace ("Server", "Telco/" + _version_string ());
 
 			unowned string method = msg.get_method ();
 			if (method != "GET" && method != "HEAD") {
@@ -591,7 +591,7 @@ namespace Frida {
 <center><h1>301 Moved Permanently</h1></center>
 <hr><center>%s</center>
 </body>
-</html>""".printf ("Frida/" + _version_string ());
+</html>""".printf ("Telco/" + _version_string ());
 
 			if (msg.get_method () == "HEAD") {
 				var headers = msg.get_response_headers ();
@@ -630,12 +630,12 @@ namespace Frida {
 			return ContentType.guess (path, null, out uncertain);
 		}
 
-		private void schedule_on_frida_thread (owned SourceFunc function) {
-			assert (frida_context != null);
+		private void schedule_on_telco_thread (owned SourceFunc function) {
+			assert (telco_context != null);
 
 			var source = new IdleSource ();
 			source.set_callback ((owned) function);
-			source.attach (frida_context);
+			source.attach (telco_context);
 		}
 
 		private void schedule_on_dbus_thread (owned SourceFunc function) {

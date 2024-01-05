@@ -1,4 +1,4 @@
-namespace Frida.Gadget {
+namespace Telco.Gadget {
 	private class Config : Object, Json.Serializable {
 		public Object interaction {
 			get;
@@ -643,7 +643,7 @@ namespace Frida.Gadget {
 	}
 
 	private async void perform_start (Gee.Promise<int>? request) {
-		worker_ignore_scope = new ThreadIgnoreScope (FRIDA_THREAD);
+		worker_ignore_scope = new ThreadIgnoreScope (TELCO_THREAD);
 
 		try {
 			yield controller.start ();
@@ -654,7 +654,7 @@ namespace Frida.Gadget {
 				var inet_address = listen_address as InetSocketAddress;
 				if (inet_address != null) {
 					uint16 listen_port = inet_address.get_port ();
-					Environment.set_thread_name ("frida-gadget-tcp-%u".printf (listen_port));
+					Environment.set_thread_name ("telco-gadget-tcp-%u".printf (listen_port));
 					if (request != null) {
 						request.set_value (listen_port);
 					} else {
@@ -665,7 +665,7 @@ namespace Frida.Gadget {
 				} else {
 #if !WINDOWS
 					var unix_address = (UnixSocketAddress) listen_address;
-					Environment.set_thread_name ("frida-gadget-unix");
+					Environment.set_thread_name ("telco-gadget-unix");
 					if (request != null) {
 						request.set_value (0);
 					} else {
@@ -936,8 +936,8 @@ namespace Frida.Gadget {
 			var client = new PortalClient (this, parse_cluster_address (address), address, options.certificate, options.token,
 				options.acl, compute_app_info ());
 			client.eternalized.connect (on_eternalized);
-			client.resume.connect (Frida.Gadget.resume);
-			client.kill.connect (Frida.Gadget.kill);
+			client.resume.connect (Telco.Gadget.resume);
+			client.kill.connect (Telco.Gadget.kill);
 			yield client.start (cancellable);
 
 			var id = PortalMembershipId (next_portal_membership_id++);
@@ -1009,7 +1009,7 @@ namespace Frida.Gadget {
 		protected override async void on_start () throws Error, IOError {
 			yield script.start ();
 
-			Frida.Gadget.resume ();
+			Telco.Gadget.resume ();
 		}
 
 		protected override async void on_terminate (TerminationReason reason) {
@@ -1078,7 +1078,7 @@ namespace Frida.Gadget {
 
 			yield scan ();
 
-			Frida.Gadget.resume ();
+			Telco.Gadget.resume ();
 		}
 
 		protected override async void on_terminate (TerminationReason reason) {
@@ -1773,16 +1773,16 @@ namespace Frida.Gadget {
 			construct {
 				try {
 					HostSession host_session = this;
-					registrations.add (connection.register_object (Frida.ObjectPath.HOST_SESSION, host_session));
+					registrations.add (connection.register_object (Telco.ObjectPath.HOST_SESSION, host_session));
 
 					AuthenticationService null_auth = new NullAuthenticationService ();
-					registrations.add (connection.register_object (Frida.ObjectPath.AUTHENTICATION_SERVICE, null_auth));
+					registrations.add (connection.register_object (Telco.ObjectPath.AUTHENTICATION_SERVICE, null_auth));
 				} catch (IOError e) {
 					assert_not_reached ();
 				}
 
 				uint pid = get_process_id ();
-				string identifier = "re.frida.Gadget";
+				string identifier = "re.telco.Gadget";
 				string name = "Gadget";
 				var no_parameters = make_parameters_dict ();
 				this_app = HostApplicationInfo (identifier, name, pid, no_parameters);
@@ -1896,13 +1896,13 @@ namespace Frida.Gadget {
 			public async void resume (uint pid, Cancellable? cancellable) throws Error, IOError {
 				validate_pid (pid);
 
-				Frida.Gadget.resume ();
+				Telco.Gadget.resume ();
 			}
 
 			public async void kill (uint pid, Cancellable? cancellable) throws Error, IOError {
 				validate_pid (pid);
 
-				Frida.Gadget.kill ();
+				Telco.Gadget.kill ();
 			}
 
 			public async AgentSessionId attach (uint pid, HashTable<string, Variant> options,
@@ -1910,7 +1910,7 @@ namespace Frida.Gadget {
 				validate_pid (pid);
 
 				if (resume_on_attach)
-					Frida.Gadget.resume ();
+					Telco.Gadget.resume ();
 
 				return yield parent.attach (options, this, cancellable);
 			}
@@ -1953,7 +1953,7 @@ namespace Frida.Gadget {
 					id: id,
 					persist_timeout: persist_timeout,
 					message_sink: sink,
-					frida_context: MainContext.ref_thread_default (),
+					telco_context: MainContext.ref_thread_default (),
 					dbus_context: dbus_context
 				);
 			}
@@ -2005,8 +2005,8 @@ namespace Frida.Gadget {
 		construct {
 			client = new PortalClient (this, connectable, host, certificate, token, acl, compute_app_info ());
 			client.eternalized.connect (on_eternalized);
-			client.resume.connect (Frida.Gadget.resume);
-			client.kill.connect (Frida.Gadget.kill);
+			client.resume.connect (Telco.Gadget.resume);
+			client.kill.connect (Telco.Gadget.kill);
 		}
 
 		protected override HostApplicationInfo compute_app_info () {

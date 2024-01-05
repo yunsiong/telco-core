@@ -1,4 +1,4 @@
-project('frida-core', 'vala', 'c', 'cpp',
+project('telco-core', 'vala', 'c', 'cpp',
   version: '1.0.0',
   meson_version: '>=0.58.0',
   default_options: ['c_std=gnu99', 'cpp_std=c++11'],
@@ -6,7 +6,7 @@ project('frida-core', 'vala', 'c', 'cpp',
 
 api_version = '1.0'
 
-header_install_dir = get_option('includedir') / 'frida-' + api_version
+header_install_dir = get_option('includedir') / 'telco-' + api_version
 
 build_os = build_machine.system()
 if build_os == 'android'
@@ -62,10 +62,10 @@ cc = meson.get_compiler('c')
 
 vala_flags = []
 
-frida_component_cflags = []
+telco_component_cflags = []
 ndebug = get_option('b_ndebug')
 if ndebug == 'true' or (ndebug == 'if-release' and not get_option('debug'))
-  frida_component_cflags += [
+  telco_component_cflags += [
     '-DG_DISABLE_ASSERT',
     '-DG_DISABLE_CHECKS',
     '-DG_DISABLE_CAST_CHECKS',
@@ -137,17 +137,17 @@ else
 endif
 
 cdata = configuration_data()
-if cc.get_define('FRIDA_VERSION') == ''
+if cc.get_define('TELCO_VERSION') == ''
   version = meson.project_version()
   tokens = version.split('.')
-  cdata.set_quoted('FRIDA_VERSION', version)
-  cdata.set('FRIDA_MAJOR_VERSION', tokens[0].to_int())
-  cdata.set('FRIDA_MINOR_VERSION', tokens[1].to_int())
-  cdata.set('FRIDA_MICRO_VERSION', tokens[2].to_int())
-  cdata.set('FRIDA_NANO_VERSION', 0)
+  cdata.set_quoted('TELCO_VERSION', version)
+  cdata.set('TELCO_MAJOR_VERSION', tokens[0].to_int())
+  cdata.set('TELCO_MINOR_VERSION', tokens[1].to_int())
+  cdata.set('TELCO_MICRO_VERSION', tokens[2].to_int())
+  cdata.set('TELCO_NANO_VERSION', 0)
 endif
 
-cdata.set_quoted('FRIDA_PREFIX', get_option('prefix'))
+cdata.set_quoted('TELCO_PREFIX', get_option('prefix'))
 
 exe_suffix = (host_os_family == 'windows') ? '.exe' : ''
 if host_os_family == 'windows'
@@ -158,16 +158,16 @@ else
   shlib_suffix = '.so'
 endif
 
-helper_name = 'frida-helper' + exe_suffix
-agent_name = 'frida-agent' + shlib_suffix
-gadget_name = 'frida-gadget' + shlib_suffix
+helper_name = 'telco-helper' + exe_suffix
+agent_name = 'telco-agent' + shlib_suffix
+gadget_name = 'telco-gadget' + shlib_suffix
 
 if host_os_family == 'darwin'
-  asset_dir = get_option('libdir') / 'frida'
-  default_asset_path_template = get_option('prefix') / get_option('libdir') / 'frida'
+  asset_dir = get_option('libdir') / 'telco'
+  default_asset_path_template = get_option('prefix') / get_option('libdir') / 'telco'
 else
-  asset_dir = get_option('libdir') / 'frida' / host_cpu_mode
-  default_asset_path_template = get_option('prefix') / get_option('libdir') / 'frida' / '<arch>'
+  asset_dir = get_option('libdir') / 'telco' / host_cpu_mode
+  default_asset_path_template = get_option('prefix') / get_option('libdir') / 'telco' / '<arch>'
 endif
 
 asset_path_template = get_option('asset_path_template')
@@ -178,8 +178,8 @@ endif
 if get_option('assets') == 'embedded'
   vala_flags += '--define=HAVE_EMBEDDED_ASSETS'
 else
-  cdata.set_quoted('FRIDA_HELPER_PATH', asset_path_template / helper_name)
-  cdata.set_quoted('FRIDA_AGENT_PATH', asset_path_template / agent_name)
+  cdata.set_quoted('TELCO_HELPER_PATH', asset_path_template / helper_name)
+  cdata.set_quoted('TELCO_AGENT_PATH', asset_path_template / agent_name)
 endif
 
 cdata.set('HAVE_' + host_os_family.to_upper(), 1)
@@ -247,9 +247,9 @@ gio_dep = dependency('gio-2.0')
 gee_dep = dependency('gee-0.8')
 json_glib_dep = dependency('json-glib-1.0')
 libsoup_dep = dependency('libsoup-3.0')
-gum_dep = dependency('frida-gum-1.0')
-gumjs_dep = dependency('frida-gumjs-1.0')
-gumjs_inspector_dep = dependency('frida-gumjs-inspector-1.0')
+gum_dep = dependency('telco-gum-1.0')
+gumjs_dep = dependency('telco-gumjs-1.0')
+gumjs_inspector_dep = dependency('telco-gumjs-inspector-1.0')
 quickjs_dep = dependency('quickjs', required: false)
 brotlidec_dep = dependency('libbrotlidec')
 
@@ -385,7 +385,7 @@ configure_file(
 
 add_project_arguments(
   '-include', 'config.h',
-  '-DG_LOG_DOMAIN="Frida"',
+  '-DG_LOG_DOMAIN="Telco"',
   '-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_56',
   '-DG_DISABLE_DEPRECATED',
   language: c_languages)

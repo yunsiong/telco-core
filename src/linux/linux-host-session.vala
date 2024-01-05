@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class LinuxHostSessionBackend : Object, HostSessionBackend {
 		private LinuxHostSessionProvider local_provider;
 
@@ -124,16 +124,16 @@ namespace Frida {
 			injector.uninjected.connect (on_uninjected);
 
 #if HAVE_EMBEDDED_ASSETS
-			var blob32 = Frida.Data.Agent.get_frida_agent_32_so_blob ();
-			var blob64 = Frida.Data.Agent.get_frida_agent_64_so_blob ();
-			var emulated_arm = Frida.Data.Agent.get_frida_agent_arm_so_blob ();
-			var emulated_arm64 = Frida.Data.Agent.get_frida_agent_arm64_so_blob ();
-			agent = new AgentDescriptor (PathTemplate ("frida-agent-<arch>.so"),
+			var blob32 = Telco.Data.Agent.get_telco_agent_32_so_blob ();
+			var blob64 = Telco.Data.Agent.get_telco_agent_64_so_blob ();
+			var emulated_arm = Telco.Data.Agent.get_telco_agent_arm_so_blob ();
+			var emulated_arm64 = Telco.Data.Agent.get_telco_agent_arm64_so_blob ();
+			agent = new AgentDescriptor (PathTemplate ("telco-agent-<arch>.so"),
 				new Bytes.static (blob32.data),
 				new Bytes.static (blob64.data),
 				new AgentResource[] {
-					new AgentResource ("frida-agent-arm.so", new Bytes.static (emulated_arm.data), tempdir),
-					new AgentResource ("frida-agent-arm64.so", new Bytes.static (emulated_arm64.data), tempdir),
+					new AgentResource ("telco-agent-arm.so", new Bytes.static (emulated_arm.data), tempdir),
+					new AgentResource ("telco-agent-arm64.so", new Bytes.static (emulated_arm64.data), tempdir),
 				},
 				AgentMode.INSTANCED,
 				tempdir);
@@ -218,7 +218,7 @@ namespace Frida {
 				tpl = agent.get_path_template ();
 			}
 #else
-			tpl = PathTemplate (Config.FRIDA_AGENT_PATH);
+			tpl = PathTemplate (Config.TELCO_AGENT_PATH);
 #endif
 			if (path == null)
 				path = tpl.expand (arch_name);
@@ -426,14 +426,14 @@ namespace Frida {
 		protected override async Future<IOStream> perform_attach_to (uint pid, HashTable<string, Variant> options,
 				Cancellable? cancellable, out Object? transport) throws Error, IOError {
 			uint id;
-			string entrypoint = "frida_agent_main";
+			string entrypoint = "telco_agent_main";
 			string parameters = make_agent_parameters (pid, "", options);
 			AgentFeatures features = CONTROL_CHANNEL;
 			var linjector = (Linjector) injector;
 #if HAVE_EMBEDDED_ASSETS
 			id = yield linjector.inject_library_resource (pid, agent, entrypoint, parameters, features, cancellable);
 #else
-			id = yield linjector.inject_library_file_with_template (pid, PathTemplate (Config.FRIDA_AGENT_PATH), entrypoint,
+			id = yield linjector.inject_library_file_with_template (pid, PathTemplate (Config.TELCO_AGENT_PATH), entrypoint,
 				parameters, features, cancellable);
 #endif
 			injectee_by_pid[pid] = id;
@@ -451,10 +451,10 @@ namespace Frida {
 			unowned string name;
 			switch (cpu_type_from_pid (pid)) {
 				case Gum.CpuType.IA32:
-					name = "frida-agent-arm.so";
+					name = "telco-agent-arm.so";
 					break;
 				case Gum.CpuType.AMD64:
-					name = "frida-agent-arm64.so";
+					name = "telco-agent-arm64.so";
 					break;
 				default:
 					throw new Error.NOT_SUPPORTED ("Emulated realm is not supported on this architecture");
@@ -1022,7 +1022,7 @@ namespace Frida {
 		}
 
 		protected override async string? load_source (Cancellable? cancellable) throws Error, IOError {
-			return (string) Frida.Data.Android.get_system_server_js_blob ().data;
+			return (string) Telco.Data.Android.get_system_server_js_blob ().data;
 		}
 
 #if ARM || ARM64

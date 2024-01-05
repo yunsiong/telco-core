@@ -32,7 +32,7 @@ def generate_agent(input_dir, output_dir, host_os_family, host_arch, host_cpu_mo
 
     try:
         subprocess.run([npm, "install"], capture_output=True, cwd=output_dir, check=True)
-        #subprocess.run([npm, "link", "/Users/oleavr/src/frida-compile"], capture_output=True, cwd=output_dir, check=True)
+        #subprocess.run([npm, "link", "/Users/oleavr/src/telco-compile"], capture_output=True, cwd=output_dir, check=True)
     except Exception as e:
         message = "\n".join([
             "",
@@ -51,7 +51,7 @@ def generate_agent(input_dir, output_dir, host_os_family, host_arch, host_cpu_mo
         subprocess.run([
                 npm, "run", "build:" + component,
                 "--",
-                "--environment", f"FRIDA_HOST_OS_FAMILY:{host_os_family},FRIDA_HOST_ARCH:{host_arch},FRIDA_HOST_CPU_MODE:{host_cpu_mode}",
+                "--environment", f"TELCO_HOST_OS_FAMILY:{host_os_family},TELCO_HOST_ARCH:{host_arch},TELCO_HOST_CPU_MODE:{host_cpu_mode}",
                 "--silent",
             ], cwd=output_dir, check=True)
     chunks = []

@@ -48,7 +48,7 @@ on_unload (void)
 #endif
 
 void
-frida_agent_main (const char * data, bool * stay_resident)
+telco_agent_main (const char * data, bool * stay_resident)
 {
   (void) data;
 
@@ -65,7 +65,7 @@ append_to_log (char c)
   HANDLE file;
   BOOL written;
 
-  path = _wgetenv (L"FRIDA_LABRAT_LOGFILE");
+  path = _wgetenv (L"TELCO_LABRAT_LOGFILE");
   assert (path != NULL);
 
   file = CreateFileW (path, FILE_APPEND_DATA, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -78,7 +78,7 @@ append_to_log (char c)
 #else
   FILE * f;
 
-  f = fopen (getenv ("FRIDA_LABRAT_LOGFILE"), "ab");
+  f = fopen (getenv ("TELCO_LABRAT_LOGFILE"), "ab");
   assert (f != NULL);
   fwrite (&c, 1, 1, f);
   fclose (f);

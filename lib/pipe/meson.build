@@ -14,7 +14,7 @@ elif host_os in ['macos', 'ios', 'tvos']
   pipe_sources += ['pipe-darwin.c']
 
   system_deps += [gio_unix_dep]
-  vala_args += ['--pkg=frida-gum-darwin-1.0', '--pkg=posix']
+  vala_args += ['--pkg=telco-gum-darwin-1.0', '--pkg=posix']
 else
   pipe_sources += ['pipe-unix.c']
 
@@ -23,14 +23,14 @@ else
 endif
 
 if host_os == 'android'
-  system_deps += [frida_selinux_dep]
-  vala_args += frida_selinux_vala_args
+  system_deps += [telco_selinux_dep]
+  vala_args += telco_selinux_vala_args
 endif
 
-pipe = static_library('frida-pipe', pipe_sources,
-  c_args: frida_component_cflags,
+pipe = static_library('telco-pipe', pipe_sources,
+  c_args: telco_component_cflags,
   vala_args: vala_args,
-  vala_header: 'frida-pipe.h',
+  vala_header: 'telco-pipe.h',
   dependencies: [glib_dep, gobject_dep, gio_dep, gee_dep, base_dep] + system_deps,
 )
 

@@ -27,10 +27,10 @@
  * SUCH DAMAGE.
  */
 
-#define frida_asm_align 0
-#define frida_asm_custom_entry(f) .fnstart
-#define frida_asm_custom_end(f) .fnend
-#define frida_asm_function_type #function
+#define telco_asm_align 0
+#define telco_asm_custom_entry(f) .fnstart
+#define telco_asm_custom_end(f) .fnend
+#define telco_asm_function_type #function
 
 #include "syscall-linux.h"
 
@@ -50,8 +50,8 @@ ENTRY_PRIVATE(syscall)
   swi     #0
   ldmfd   sp!, {r4, r5, r6, r7}
   .cfi_def_cfa_offset 0
-  cmn     r0, #(FRIDA_MAX_ERRNO + 1)
+  cmn     r0, #(TELCO_MAX_ERRNO + 1)
   bxls    lr
   neg     r0, r0
-  b       _frida_set_errno
+  b       _telco_set_errno
 END(syscall)

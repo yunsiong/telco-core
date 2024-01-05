@@ -25,19 +25,19 @@ codesign=$2
 case $host_os in
   macos)
     if [ -z "$MACOS_CERTID" ]; then
-      echo "MACOS_CERTID not set, see https://github.com/frida/frida#apple-oses"
+      echo "MACOS_CERTID not set, see https://github.com/telco/telco#apple-oses"
       exit 1
     fi
     ;;
   ios)
     if [ -z "$IOS_CERTID" ]; then
-      echo "IOS_CERTID not set, see https://github.com/frida/frida#apple-oses"
+      echo "IOS_CERTID not set, see https://github.com/telco/telco#apple-oses"
       exit 1
     fi
     ;;
   tvos)
     if [ -z "$TVOS_CERTID" ]; then
-      echo "TVOS_CERTID not set, see https://github.com/frida/frida#apple-oses"
+      echo "TVOS_CERTID not set, see https://github.com/telco/telco#apple-oses"
       exit 1
     fi
     ;;
@@ -55,7 +55,7 @@ case $host_os in
   macos|ios|tvos)
     case $host_os in
       macos)
-        "$codesign" -f -s "$MACOS_CERTID" -i "re.frida.Inject" "$intermediate_path" || exit 1
+        "$codesign" -f -s "$MACOS_CERTID" -i "re.telco.Inject" "$intermediate_path" || exit 1
         ;;
       ios)
         "$codesign" -f -s "$IOS_CERTID" --entitlements "$input_entitlements_path" "$intermediate_path" || exit 1

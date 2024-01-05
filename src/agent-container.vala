@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class AgentContainer : Object, AgentSessionProvider {
 		public DBusConnection connection {
 			get;
@@ -25,7 +25,7 @@ namespace Frida {
 			assert (container.module != null);
 
 			void * main_func_symbol;
-			var main_func_found = container.module.symbol ("frida_agent_main", out main_func_symbol);
+			var main_func_found = container.module.symbol ("telco_agent_main", out main_func_symbol);
 			assert (main_func_found);
 			container.main_impl = (AgentMainFunc) main_func_symbol;
 
@@ -100,7 +100,7 @@ namespace Frida {
 		}
 
 		private void start_worker_thread () {
-			thread = new Thread<bool> ("frida-agent-container", run);
+			thread = new Thread<bool> ("telco-agent-container", run);
 		}
 
 		private void stop_worker_thread () {
@@ -115,7 +115,7 @@ namespace Frida {
 
 #if LINUX
 			var s = LinuxInjectorState ();
-			s.frida_ctrlfd = -1;
+			s.telco_ctrlfd = -1;
 			s.agent_ctrlfd = agent_ctrlfd_for_peer.steal ();
 			injector_state = &s;
 #endif

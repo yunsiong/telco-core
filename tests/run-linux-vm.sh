@@ -20,7 +20,7 @@ case $arch in
 esac
 
 srcdir=$(cd $(dirname "$0") && pwd)
-builddir=$(cd ../build/tmp_thin-linux-$arch/frida-core && pwd)
+builddir=$(cd ../build/tmp_thin-linux-$arch/telco-core && pwd)
 intdir=$(mktemp -d)
 
 cleanup() {
@@ -31,10 +31,10 @@ trap cleanup EXIT
 echo "Using: $intdir"
 set -e
 
-. ../build/frida-env-linux-$arch.rc
+. ../build/telco-env-linux-$arch.rc
 ninja -C $builddir
 cd $builddir/tests
-cp -a frida-tests labrats "$intdir/"
+cp -a telco-tests labrats "$intdir/"
 cd "$intdir"
 arm_now install $vm
 arm_now resize 500M

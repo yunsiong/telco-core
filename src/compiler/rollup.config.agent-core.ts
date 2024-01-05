@@ -1,10 +1,10 @@
-import crosspath from "@frida/crosspath";
+import crosspath from "@telco/crosspath";
 import fs from "fs";
 import { sync as glob } from "glob";
 import replace from "@rollup/plugin-replace";
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
-import polyfills from "@frida/rollup-plugin-node-polyfills";
+import polyfills from "@telco/rollup-plugin-node-polyfills";
 import { terser } from "rollup-plugin-terser";
 import { defineConfig } from "rollup";
 import type rollup from "rollup";
@@ -14,7 +14,7 @@ export default defineConfig({
     output: {
         file: "agent-core.js",
         format: "umd",
-        name: "FridaCompilerAgentCore",
+        name: "TelcoCompilerAgentCore",
         generatedCode: {
             preset: "es2015",
         },
@@ -39,7 +39,7 @@ export default defineConfig({
             compress: {
                 module: true,
                 global_defs: {
-                    "process.env.FRIDA_COMPILE": true
+                    "process.env.TELCO_COMPILE": true
                 },
             },
             mangle: {
@@ -51,24 +51,24 @@ export default defineConfig({
 });
 
 function computeSubstitutionValues() {
-    const hostOsFamily = process.env.FRIDA_HOST_OS_FAMILY;
+    const hostOsFamily = process.env.TELCO_HOST_OS_FAMILY;
     if (hostOsFamily === undefined) {
-      throw new Error("missing FRIDA_HOST_OS_FAMILY");
+      throw new Error("missing TELCO_HOST_OS_FAMILY");
     }
 
-    const hostArch = process.env.FRIDA_HOST_ARCH;
+    const hostArch = process.env.TELCO_HOST_ARCH;
     if (hostArch === undefined) {
-      throw new Error("missing FRIDA_HOST_ARCH");
+      throw new Error("missing TELCO_HOST_ARCH");
     }
 
-    const hostCpuMode = process.env.FRIDA_HOST_CPU_MODE;
+    const hostCpuMode = process.env.TELCO_HOST_CPU_MODE;
     if (hostCpuMode === undefined) {
-      throw new Error("missing FRIDA_HOST_CPU_MODE");
+      throw new Error("missing TELCO_HOST_CPU_MODE");
     }
 
     const outputDir = __dirname;
 
-    const compilerDir = crosspath.join(__dirname, "node_modules", "frida-compile");
+    const compilerDir = crosspath.join(__dirname, "node_modules", "telco-compile");
     let usingLinkedCompiler = false;
     try {
         usingLinkedCompiler = fs.statSync(crosspath.join(compilerDir, "node_modules")).isDirectory();
@@ -79,35 +79,35 @@ function computeSubstitutionValues() {
     const assetModulesDir = crosspath.join(assetParentDir, "node_modules");
 
     const shimDirs = [
-        ["@frida", "assert"],
-        ["@frida", "base64-js"],
-        ["@frida", "buffer"],
-        ["@frida", "crypto"],
-        ["@frida", "diagnostics_channel"],
-        ["@frida", "events"],
-        ["@frida", "http"],
-        ["@frida", "http-parser-js"],
-        ["@frida", "https"],
-        ["@frida", "ieee754"],
-        ["@frida", "net"],
-        ["@frida", "os"],
-        ["@frida", "path"],
-        ["@frida", "process"],
-        ["@frida", "punycode"],
-        ["@frida", "querystring"],
-        ["@frida", "readable-stream"],
-        ["@frida", "stream"],
-        ["@frida", "string_decoder"],
-        ["@frida", "timers"],
-        ["@frida", "tty"],
-        ["@frida", "url"],
-        ["@frida", "util"],
-        ["@frida", "vm"],
-        ["frida-fs"],
+        ["@telco", "assert"],
+        ["@telco", "base64-js"],
+        ["@telco", "buffer"],
+        ["@telco", "crypto"],
+        ["@telco", "diagnostics_channel"],
+        ["@telco", "events"],
+        ["@telco", "http"],
+        ["@telco", "http-parser-js"],
+        ["@telco", "https"],
+        ["@telco", "ieee754"],
+        ["@telco", "net"],
+        ["@telco", "os"],
+        ["@telco", "path"],
+        ["@telco", "process"],
+        ["@telco", "punycode"],
+        ["@telco", "querystring"],
+        ["@telco", "readable-stream"],
+        ["@telco", "stream"],
+        ["@telco", "string_decoder"],
+        ["@telco", "timers"],
+        ["@telco", "tty"],
+        ["@telco", "url"],
+        ["@telco", "util"],
+        ["@telco", "vm"],
+        ["telco-fs"],
     ];
     const typeDirs = [
         ["@types", "node"],
-        ["@types", "frida-gum"],
+        ["@types", "telco-gum"],
     ];
 
     const assets: string[] = [];
@@ -123,7 +123,7 @@ function computeSubstitutionValues() {
     assets.push(...glob(crosspath.join(compilerDir, "ext", "lib.decorators*.d.ts")));
 
     const ignoredAssetFiles = new Set([
-        "@frida/process/browser.js",
+        "@telco/process/browser.js",
     ]);
 
     const agentDirectories = new Set<string>();
@@ -131,7 +131,7 @@ function computeSubstitutionValues() {
     for (const assetPath of assets) {
         let assetRelpath = assetPath.substring(assetParentDir.length);
         if (usingLinkedCompiler && assetRelpath.startsWith("/ext/")) {
-            assetRelpath = crosspath.join("/", "node_modules", "frida-compile", assetRelpath.substring(1));
+            assetRelpath = crosspath.join("/", "node_modules", "telco-compile", assetRelpath.substring(1));
         }
 
         const identifier = assetRelpath.split("/").slice(2).join("/");
@@ -154,7 +154,7 @@ function computeSubstitutionValues() {
     orderedAgentFiles.sort((a, b) => a[0].localeCompare(b[0]));
 
     return {
-        "Frida.version": "'0.0.0'",
+        "Telco.version": "'0.0.0'",
         "Process.id": "1",
         "Process.platform": `'${hostOsFamily}'`,
         "Process.arch": `'${hostArch}'`,

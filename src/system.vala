@@ -1,8 +1,8 @@
-namespace Frida {
+namespace Telco {
 	namespace System {
-		public extern static Frida.HostApplicationInfo get_frontmost_application (FrontmostQueryOptions options) throws Error;
-		public extern static Frida.HostApplicationInfo[] enumerate_applications (ApplicationQueryOptions options);
-		public extern static Frida.HostProcessInfo[] enumerate_processes (ProcessQueryOptions options);
+		public extern static Telco.HostApplicationInfo get_frontmost_application (FrontmostQueryOptions options) throws Error;
+		public extern static Telco.HostApplicationInfo[] enumerate_applications (ApplicationQueryOptions options);
+		public extern static Telco.HostProcessInfo[] enumerate_processes (ProcessQueryOptions options);
 		public extern static void kill (uint pid);
 	}
 
@@ -238,7 +238,7 @@ namespace Frida {
 		}
 
 		public static string make_name () {
-			var builder = new StringBuilder ("frida-");
+			var builder = new StringBuilder ("telco-");
 			for (var i = 0; i != 16; i++)
 				builder.append_printf ("%02x", Random.int_range (0, 256));
 			return builder.str;

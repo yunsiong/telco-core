@@ -1,23 +1,23 @@
 {
-  "name": "frida-compiler-agent",
+  "name": "telco-compiler-agent",
   "version": "1.0.0",
-  "description": "Agent used by Frida's compiler",
+  "description": "Agent used by Telco's compiler",
   "main": "agent.ts",
   "scripts": {
     "build:typescript": "rollup --config rollup.config.typescript.ts --configPlugin typescript",
     "build:agent-core": "rollup --config rollup.config.agent-core.ts --configPlugin typescript"
   },
   "dependencies": {
-    "@frida/crosspath": "3.0.0",
-    "frida-compile": "16.4.1",
-    "frida-fs": "5.2.5"
+    "@telco/crosspath": "3.0.0",
+    "telco-compile": "16.4.1",
+    "telco-fs": "5.2.5"
   },
   "devDependencies": {
-    "@frida/rollup-plugin-node-polyfills": "^1.0.3",
+    "@telco/rollup-plugin-node-polyfills": "^1.0.3",
     "@rollup/plugin-node-resolve": "^14.1.0",
     "@rollup/plugin-replace": "^4.0.0",
     "@rollup/plugin-typescript": "^8.3.4",
-    "@types/frida-gum": "18.5.0",
+    "@types/telco-gum": "18.5.0",
     "@types/glob": "^8.0.0",
     "@types/node": "18.7.23",
     "glob": "^8.0.3",

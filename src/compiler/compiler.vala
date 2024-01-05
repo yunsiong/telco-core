@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class Compiler : Object {
 		public signal void starting ();
 		public signal void finished ();

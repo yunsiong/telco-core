@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class PortalClient : Object, AgentSessionProvider {
 		public signal void resume ();
 		public signal void kill ();
@@ -275,7 +275,7 @@ namespace Frida {
 			var opts = SessionOptions._deserialize (options);
 
 			if (opts.realm == EMULATED)
-				throw new Error.NOT_SUPPORTED ("Emulated realm is not supported by frida-gadget");
+				throw new Error.NOT_SUPPORTED ("Emulated realm is not supported by telco-gadget");
 
 			AgentMessageSink sink;
 			try {
@@ -307,12 +307,12 @@ namespace Frida {
 
 #if !WINDOWS
 		private async void migrate (AgentSessionId id, Socket to_socket, Cancellable? cancellable) throws Error, IOError {
-			throw new Error.NOT_SUPPORTED ("Session migration is not supported with frida-portal");
+			throw new Error.NOT_SUPPORTED ("Session migration is not supported with telco-portal");
 		}
 #endif
 
 		private async void unload (Cancellable? cancellable) throws Error, IOError {
-			throw new Error.INVALID_OPERATION ("Unload is not allowed with frida-portal");
+			throw new Error.INVALID_OPERATION ("Unload is not allowed with telco-portal");
 		}
 
 		private void on_resume () {
@@ -361,7 +361,7 @@ namespace Frida {
 					id: id,
 					persist_timeout: persist_timeout,
 					message_sink: sink,
-					frida_context: MainContext.ref_thread_default (),
+					telco_context: MainContext.ref_thread_default (),
 					dbus_context: dbus_context
 				);
 			}

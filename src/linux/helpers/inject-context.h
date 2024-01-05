@@ -1,5 +1,5 @@
-#ifndef __FRIDA_INJECT_CONTEXT_H__
-#define __FRIDA_INJECT_CONTEXT_H__
+#ifndef __TELCO_INJECT_CONTEXT_H__
+#define __TELCO_INJECT_CONTEXT_H__
 
 #ifdef NOLIBC
 typedef void * pthread_t;
@@ -15,54 +15,54 @@ typedef unsigned int socklen_t;
 # include <sys/socket.h>
 #endif
 
-typedef size_t FridaBootstrapStatus;
-typedef struct _FridaBootstrapContext FridaBootstrapContext;
-typedef struct _FridaLoaderContext FridaLoaderContext;
-typedef struct _FridaLibcApi FridaLibcApi;
-typedef uint8_t FridaMessageType;
-typedef struct _FridaHelloMessage FridaHelloMessage;
-typedef struct _FridaByeMessage FridaByeMessage;
-typedef int FridaRtldFlavor;
+typedef size_t TelcoBootstrapStatus;
+typedef struct _TelcoBootstrapContext TelcoBootstrapContext;
+typedef struct _TelcoLoaderContext TelcoLoaderContext;
+typedef struct _TelcoLibcApi TelcoLibcApi;
+typedef uint8_t TelcoMessageType;
+typedef struct _TelcoHelloMessage TelcoHelloMessage;
+typedef struct _TelcoByeMessage TelcoByeMessage;
+typedef int TelcoRtldFlavor;
 
-enum _FridaBootstrapStatus
+enum _TelcoBootstrapStatus
 {
-  FRIDA_BOOTSTRAP_SUCCESS,
-  FRIDA_BOOTSTRAP_AUXV_NOT_FOUND,
-  FRIDA_BOOTSTRAP_TOO_EARLY,
-  FRIDA_BOOTSTRAP_LIBC_LOAD_ERROR,
-  FRIDA_BOOTSTRAP_LIBC_UNSUPPORTED,
-  FRIDA_BOOTSTRAP_MMAP_ERROR,
+  TELCO_BOOTSTRAP_SUCCESS,
+  TELCO_BOOTSTRAP_AUXV_NOT_FOUND,
+  TELCO_BOOTSTRAP_TOO_EARLY,
+  TELCO_BOOTSTRAP_LIBC_LOAD_ERROR,
+  TELCO_BOOTSTRAP_LIBC_UNSUPPORTED,
+  TELCO_BOOTSTRAP_MMAP_ERROR,
 };
 
-struct _FridaBootstrapContext
+struct _TelcoBootstrapContext
 {
   size_t page_size;
   const char * fallback_ld;
   const char * fallback_libc;
-  FridaRtldFlavor rtld_flavor;
+  TelcoRtldFlavor rtld_flavor;
   void * rtld_base;
   void * r_brk;
   size_t loader_size;
   void * loader_base;
   int enable_ctrlfds;
   int ctrlfds[2];
-  FridaLibcApi * libc;
+  TelcoLibcApi * libc;
 };
 
-struct _FridaLoaderContext
+struct _TelcoLoaderContext
 {
   int ctrlfds[2];
   const char * agent_entrypoint;
   const char * agent_data;
   const char * fallback_address;
-  FridaLibcApi * libc;
+  TelcoLibcApi * libc;
 
   pthread_t worker;
   void * agent_handle;
   void (* agent_entrypoint_impl) (const char * data, int * unload_policy, void * injector_state);
 };
 
-struct _FridaLibcApi
+struct _TelcoLibcApi
 {
   int (* printf) (const char * format, ...);
   int (* sprintf) (char * str, const char * format, ...);
@@ -87,34 +87,34 @@ struct _FridaLibcApi
   char * (* dlerror) (void);
 };
 
-enum _FridaMessageType
+enum _TelcoMessageType
 {
-  FRIDA_MESSAGE_HELLO,
-  FRIDA_MESSAGE_READY,
-  FRIDA_MESSAGE_ACK,
-  FRIDA_MESSAGE_BYE,
-  FRIDA_MESSAGE_ERROR_DLOPEN,
-  FRIDA_MESSAGE_ERROR_DLSYM,
+  TELCO_MESSAGE_HELLO,
+  TELCO_MESSAGE_READY,
+  TELCO_MESSAGE_ACK,
+  TELCO_MESSAGE_BYE,
+  TELCO_MESSAGE_ERROR_DLOPEN,
+  TELCO_MESSAGE_ERROR_DLSYM,
 };
 
-struct _FridaHelloMessage
+struct _TelcoHelloMessage
 {
   pid_t thread_id;
 };
 
-struct _FridaByeMessage
+struct _TelcoByeMessage
 {
   int unload_policy;
 };
 
-enum _FridaRtldFlavor
+enum _TelcoRtldFlavor
 {
-  FRIDA_RTLD_UNKNOWN,
-  FRIDA_RTLD_NONE,
-  FRIDA_RTLD_GLIBC,
-  FRIDA_RTLD_UCLIBC,
-  FRIDA_RTLD_MUSL,
-  FRIDA_RTLD_ANDROID,
+  TELCO_RTLD_UNKNOWN,
+  TELCO_RTLD_NONE,
+  TELCO_RTLD_GLIBC,
+  TELCO_RTLD_UCLIBC,
+  TELCO_RTLD_MUSL,
+  TELCO_RTLD_ANDROID,
 };
 
 #endif

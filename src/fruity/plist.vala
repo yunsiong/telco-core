@@ -1,5 +1,5 @@
-[CCode (gir_namespace = "FridaFruity", gir_version = "1.0")]
-namespace Frida.Fruity {
+[CCode (gir_namespace = "TelcoFruity", gir_version = "1.0")]
+namespace Telco.Fruity {
 	public class Plist : PlistDict {
 		public enum Format {
 			AUTO,

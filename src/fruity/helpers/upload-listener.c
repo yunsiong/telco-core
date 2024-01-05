@@ -1,7 +1,7 @@
 #include "upload-api.h"
 
 uint64_t
-frida_listen (int rx_buffer_size, const FridaUploadApi * api)
+telco_listen (int rx_buffer_size, const TelcoUploadApi * api)
 {
   uint8_t error_code;
   int fd;
@@ -79,13 +79,13 @@ failure:
 int
 main (void)
 {
-  const FridaUploadApi api = FRIDA_UPLOAD_API_INIT;
+  const TelcoUploadApi api = TELCO_UPLOAD_API_INIT;
   uint64_t result;
   uint8_t error_code;
   uint32_t fd;
   uint16_t port;
 
-  result = frida_listen (FRIDA_RX_BUFFER_SIZE, &api);
+  result = telco_listen (TELCO_RX_BUFFER_SIZE, &api);
 
   error_code = (result >> 56) & 0xff;
   fd         = (result >> 16) & 0xffffffff;

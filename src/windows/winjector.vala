@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class Winjector : Object, Injector {
 		public WindowsHelper helper {
 			get;

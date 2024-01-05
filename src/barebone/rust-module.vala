@@ -1,5 +1,5 @@
-[CCode (gir_namespace = "FridaBarebone", gir_version = "1.0")]
-namespace Frida.Barebone {
+[CCode (gir_namespace = "TelcoBarebone", gir_version = "1.0")]
+namespace Telco.Barebone {
 	private class RustModule : Object {
 		public signal void console_output (string message);
 

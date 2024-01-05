@@ -1,4 +1,4 @@
-#include "frida-core.h"
+#include "telco-core.h"
 
 #include "access-helpers.h"
 
@@ -15,7 +15,7 @@
   }
 
 void
-frida_winjector_set_acls_as_needed (const gchar * path, GError ** error)
+telco_winjector_set_acls_as_needed (const gchar * path, GError ** error)
 {
   const gchar * failed_operation;
   LPWSTR path_utf16;
@@ -26,7 +26,7 @@ frida_winjector_set_acls_as_needed (const gchar * path, GError ** error)
   PACL dacl;
 
   path_utf16 = (WCHAR *) g_utf8_to_utf16 (path, -1, NULL, NULL, NULL);
-  sddl = frida_access_get_sddl_string_for_temp_directory ();
+  sddl = telco_access_get_sddl_string_for_temp_directory ();
 
   if (sddl != NULL)
   {

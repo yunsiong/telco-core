@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class Qinjector : Object, Injector {
 		public string temp_directory {
 			owned get {

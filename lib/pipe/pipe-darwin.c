@@ -1,6 +1,6 @@
 #include "pipe-glue.h"
 
-#include "frida-tvos.h"
+#include "telco-tvos.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -22,9 +22,9 @@
     goto bsd_failure; \
   }
 
-typedef struct _FridaInitMessage FridaInitMessage;
+typedef struct _TelcoInitMessage TelcoInitMessage;
 
-struct _FridaInitMessage
+struct _TelcoInitMessage
 {
   mach_msg_header_t header;
   mach_msg_trailer_t trailer;
@@ -34,12 +34,12 @@ extern int fileport_makeport (int fd, mach_port_t * port);
 extern int fileport_makefd (mach_port_t port);
 
 void
-frida_pipe_transport_set_temp_directory (const gchar * path)
+telco_pipe_transport_set_temp_directory (const gchar * path)
 {
 }
 
 void *
-_frida_pipe_transport_create_backend (gchar ** local_address, gchar ** remote_address, GError ** error)
+_telco_pipe_transport_create_backend (gchar ** local_address, gchar ** remote_address, GError ** error)
 {
   mach_port_t self_task;
   int status, sockets[2] = { -1, -1 }, i;
@@ -66,7 +66,7 @@ _frida_pipe_transport_create_backend (gchar ** local_address, gchar ** remote_ad
 
     fcntl (fd, F_SETFD, FD_CLOEXEC);
     setsockopt (fd, SOL_SOCKET, SO_NOSIGPIPE, &no_sigpipe, sizeof (no_sigpipe));
-    frida_unix_socket_tune_buffer_sizes (fd);
+    telco_unix_socket_tune_buffer_sizes (fd);
   }
 
   status = fileport_makeport (sockets[0], &local_wrapper);
@@ -117,8 +117,8 @@ _frida_pipe_transport_create_backend (gchar ** local_address, gchar ** remote_ad
 mach_failure:
   {
     g_set_error (error,
-        FRIDA_ERROR,
-        FRIDA_ERROR_NOT_SUPPORTED,
+        TELCO_ERROR,
+        TELCO_ERROR_NOT_SUPPORTED,
         "Unexpected error while setting up mach ports (%s returned '%s')",
         failed_operation, mach_error_string (kr));
     goto beach;
@@ -126,8 +126,8 @@ mach_failure:
 bsd_failure:
   {
     g_set_error (error,
-        FRIDA_ERROR,
-        FRIDA_ERROR_NOT_SUPPORTED,
+        TELCO_ERROR,
+        TELCO_ERROR_NOT_SUPPORTED,
         "Unexpected error while setting up mach ports (%s returned '%s')",
         failed_operation, g_strerror (errno));
     goto beach;
@@ -163,17 +163,17 @@ beach:
 }
 
 void
-_frida_pipe_transport_destroy_backend (void * backend)
+_telco_pipe_transport_destroy_backend (void * backend)
 {
 }
 
 gint
-_frida_darwin_pipe_consume_stashed_file_descriptor (const gchar * address, GError ** error)
+_telco_darwin_pipe_consume_stashed_file_descriptor (const gchar * address, GError ** error)
 {
   gint fd = -1;
   G_GNUC_UNUSED gint assigned;
   mach_port_t port = MACH_PORT_NULL;
-  FridaInitMessage init = { { 0, }, { 0, } };
+  TelcoInitMessage init = { { 0, }, { 0, } };
   kern_return_t kr;
   const gchar * failed_operation;
   mach_port_t wrapper;
@@ -193,8 +193,8 @@ _frida_darwin_pipe_consume_stashed_file_descriptor (const gchar * address, GErro
 mach_failure:
   {
     g_set_error (error,
-        FRIDA_ERROR,
-        FRIDA_ERROR_NOT_SUPPORTED,
+        TELCO_ERROR,
+        TELCO_ERROR_NOT_SUPPORTED,
         "Unexpected error while setting up pipe (%s returned '%s')",
         failed_operation, mach_error_string (kr));
     goto beach;
@@ -202,8 +202,8 @@ mach_failure:
 bsd_failure:
   {
     g_set_error (error,
-        FRIDA_ERROR,
-        FRIDA_ERROR_NOT_SUPPORTED,
+        TELCO_ERROR,
+        TELCO_ERROR_NOT_SUPPORTED,
         "Unexpected error while setting up pipe (%s returned '%s')",
         failed_operation, g_strerror (errno));
     goto beach;

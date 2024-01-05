@@ -1,5 +1,5 @@
-#ifndef __FRIDA_UPLOAD_API_H__
-#define __FRIDA_UPLOAD_API_H__
+#ifndef __TELCO_UPLOAD_API_H__
+#define __TELCO_UPLOAD_API_H__
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -14,9 +14,9 @@
 # include <mach/mach_vm.h>
 #endif
 
-typedef struct _FridaUploadApi FridaUploadApi;
+typedef struct _TelcoUploadApi TelcoUploadApi;
 
-struct _FridaUploadApi
+struct _TelcoUploadApi
 {
   int (* socket) (int domain, int type, int protocol);
   int (* setsockopt) (int socket, int level, int option_name, const void * option_value, socklen_t option_len);
@@ -39,7 +39,7 @@ struct _FridaUploadApi
   int * (* get_errno_storage) (void);
 };
 
-#define FRIDA_UPLOAD_API_INIT { \
+#define TELCO_UPLOAD_API_INIT { \
       socket, \
       setsockopt, \
       bind, \
@@ -60,6 +60,6 @@ struct _FridaUploadApi
       __error \
     }
 
-#define FRIDA_RX_BUFFER_SIZE (1024 * 1024)
+#define TELCO_RX_BUFFER_SIZE (1024 * 1024)
 
 #endif

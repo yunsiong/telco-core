@@ -1,4 +1,4 @@
-namespace Frida.HostSessionTest {
+namespace Telco.HostSessionTest {
 	public static void add_tests () {
 		GLib.Test.add_func ("/HostSession/Service/provider-available", () => {
 			var h = new Harness ((h) => Service.provider_available.begin (h as Harness));
@@ -909,7 +909,7 @@ namespace Frida.HostSessionTest {
 		try {
 			var device_manager = new DeviceManager ();
 			var device = yield device_manager.get_device_by_type (DeviceType.LOCAL);
-			var process = Frida.Test.Process.start (Frida.Test.Labrats.path_to_executable ("sleeper"));
+			var process = Telco.Test.Process.start (Telco.Test.Labrats.path_to_executable ("sleeper"));
 
 			/* TODO: improve injectors to handle injection into a process that hasn't yet finished initializing */
 			Thread.usleep (50000);
@@ -1083,7 +1083,7 @@ namespace Frida.HostSessionTest {
 				var device_manager = new DeviceManager ();
 				var device = yield device_manager.add_remote_device ("127.0.0.1:%u".printf (proxy.proxy_port));
 
-				var process = Frida.Test.Process.create (Frida.Test.Labrats.path_to_executable ("sleeper"));
+				var process = Telco.Test.Process.create (Telco.Test.Labrats.path_to_executable ("sleeper"));
 
 				var options = new SessionOptions ();
 				options.persist_timeout = 5;
@@ -1393,7 +1393,7 @@ namespace Frida.HostSessionTest {
 		private async void measure_latency (Harness h, Device device, Strategy strategy) throws GLib.Error {
 			h.disable_timeout ();
 
-			var process = Frida.Test.Process.create (Frida.Test.Labrats.path_to_executable ("sleeper"));
+			var process = Telco.Test.Process.create (Telco.Test.Labrats.path_to_executable ("sleeper"));
 
 			var session = yield device.attach (process.id);
 
@@ -1492,7 +1492,7 @@ namespace Frida.HostSessionTest {
 		}
 
 		private static async void spawn (Harness h) {
-			if ((Frida.Test.os () == Frida.Test.OS.ANDROID || Frida.Test.os_arch_suffix () == "-linux-arm") &&
+			if ((Telco.Test.os () == Telco.Test.OS.ANDROID || Telco.Test.os_arch_suffix () == "-linux-arm") &&
 					!GLib.Test.slow ()) {
 				stdout.printf ("<skipping, run in slow mode> ");
 				h.done ();
@@ -1528,7 +1528,7 @@ namespace Frida.HostSessionTest {
 
 				var options = HostSpawnOptions ();
 				options.stdio = PIPE;
-				pid = yield host_session.spawn (Frida.Test.Labrats.path_to_executable ("sleeper"), options, cancellable);
+				pid = yield host_session.spawn (Telco.Test.Labrats.path_to_executable ("sleeper"), options, cancellable);
 
 				var session_id = yield host_session.attach (pid, make_parameters_dict (), cancellable);
 				var session = yield prov.link_agent_session (host_session, session_id, h, cancellable);
@@ -1587,19 +1587,19 @@ namespace Frida.HostSessionTest {
 		}
 
 		private static async void fork (Harness h) {
-			yield Unix.run_fork_scenario (h, Frida.Test.Labrats.path_to_executable ("forker"));
+			yield Unix.run_fork_scenario (h, Telco.Test.Labrats.path_to_executable ("forker"));
 		}
 
 		private static async void fork_plus_exec (Harness h, string method) {
-			yield Unix.run_fork_plus_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), method);
+			yield Unix.run_fork_plus_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), method);
 		}
 
 		private static async void bad_exec (Harness h) {
-			yield Unix.run_bad_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), "execv");
+			yield Unix.run_bad_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), "execv");
 		}
 
 		private static async void bad_then_good_exec (Harness h) {
-			yield Unix.run_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), "spawn-bad-then-good-path", "execv");
+			yield Unix.run_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), "spawn-bad-then-good-path", "execv");
 		}
 
 		namespace Manual {
@@ -1688,7 +1688,7 @@ namespace Frida.HostSessionTest {
 
 			assert_true (prov.name == "Local System");
 
-			if (Frida.Test.os () == Frida.Test.OS.MACOS) {
+			if (Telco.Test.os () == Telco.Test.OS.MACOS) {
 				Variant? icon = prov.icon;
 				assert_nonnull (icon);
 				var dict = new VariantDict (icon);
@@ -1765,7 +1765,7 @@ namespace Frida.HostSessionTest {
 
 				var options = HostSpawnOptions ();
 				options.stdio = PIPE;
-				pid = yield host_session.spawn (Frida.Test.Labrats.path_to_file (target_name), options, cancellable);
+				pid = yield host_session.spawn (Telco.Test.Labrats.path_to_file (target_name), options, cancellable);
 
 				var session_id = yield host_session.attach (pid, make_parameters_dict (), cancellable);
 				var session = yield prov.link_agent_session (host_session, session_id, h, cancellable);
@@ -1885,7 +1885,7 @@ namespace Frida.HostSessionTest {
 
 				var options = HostSpawnOptions ();
 				options.stdio = PIPE;
-				pid = yield host_session.spawn (Frida.Test.Labrats.path_to_file (target_name), options, cancellable);
+				pid = yield host_session.spawn (Telco.Test.Labrats.path_to_file (target_name), options, cancellable);
 
 				yield host_session.resume (pid, cancellable);
 
@@ -1910,7 +1910,7 @@ namespace Frida.HostSessionTest {
 		}
 
 		private static async void own_memory_ranges_should_be_cloaked (Harness h) {
-			if (Frida.Test.os () != Frida.Test.OS.MACOS || Frida.Test.cpu () != Frida.Test.CPU.X86_64) {
+			if (Telco.Test.os () != Telco.Test.OS.MACOS || Telco.Test.cpu () != Telco.Test.CPU.X86_64) {
 				stdout.printf ("<skipping, test only available on macOS/x86_64 for now> ");
 				h.done ();
 				return;
@@ -1919,7 +1919,7 @@ namespace Frida.HostSessionTest {
 			try {
 				var device_manager = new DeviceManager ();
 				var device = yield device_manager.get_device_by_type (DeviceType.LOCAL);
-				var process = Frida.Test.Process.start (Frida.Test.Labrats.path_to_executable ("sleeper"));
+				var process = Telco.Test.Process.start (Telco.Test.Labrats.path_to_executable ("sleeper"));
 
 				/* TODO: improve injector to handle injection into a process that hasn't yet finished initializing */
 				Thread.usleep (50000);
@@ -2050,7 +2050,7 @@ namespace Frida.HostSessionTest {
 				try {
 					var device_manager = new DeviceManager ();
 					var device = yield device_manager.get_device_by_type (DeviceType.LOCAL);
-					var process = Frida.Test.Process.start (Frida.Test.Labrats.path_to_executable ("sleeper"));
+					var process = Telco.Test.Process.start (Telco.Test.Labrats.path_to_executable ("sleeper"));
 
 					/* TODO: improve injector to handle injection into a process that hasn't yet finished initializing */
 					Thread.usleep (50000);
@@ -2090,7 +2090,7 @@ namespace Frida.HostSessionTest {
 						waiting = false;
 					}
 					assert_true (received_message == "{\"type\":\"send\",\"payload\":\"dispose\"}");
-					assert_true (detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+					assert_true (detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 					h.done ();
 				} catch (GLib.Error e) {
@@ -2100,41 +2100,41 @@ namespace Frida.HostSessionTest {
 		}
 
 		private static async void fork_native (Harness h) {
-			yield Unix.run_fork_scenario (h, Frida.Test.Labrats.path_to_file (target_name_of_native ("forker")));
+			yield Unix.run_fork_scenario (h, Telco.Test.Labrats.path_to_file (target_name_of_native ("forker")));
 		}
 
 		private static async void fork_other (Harness h) {
-			yield Unix.run_fork_scenario (h, Frida.Test.Labrats.path_to_file (target_name_of_other ("forker")));
+			yield Unix.run_fork_scenario (h, Telco.Test.Labrats.path_to_file (target_name_of_other ("forker")));
 		}
 
 		private static async void fork_plus_exec (Harness h, string method) {
-			yield Unix.run_fork_plus_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), method);
+			yield Unix.run_fork_plus_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), method);
 		}
 
 		private static async void bad_exec (Harness h) {
-			yield Unix.run_bad_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), "execv");
+			yield Unix.run_bad_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), "execv");
 		}
 
 		private static async void bad_then_good_exec (Harness h) {
-			yield Unix.run_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), "spawn-bad-then-good-path", "execv");
+			yield Unix.run_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), "spawn-bad-then-good-path", "execv");
 		}
 
 		private static async void posix_spawn (Harness h) {
-			yield Unix.run_posix_spawn_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"));
+			yield Unix.run_posix_spawn_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"));
 		}
 
 		private static async void posix_spawn_plus_setexec (Harness h) {
-			yield Unix.run_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), "spawn", "posix_spawn+setexec");
+			yield Unix.run_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), "spawn", "posix_spawn+setexec");
 		}
 
 		private static string target_name_of_native (string name) {
 			string suffix;
-			switch (Frida.Test.os ())
+			switch (Telco.Test.os ())
 			{
-				case Frida.Test.OS.MACOS:
+				case Telco.Test.OS.MACOS:
 					suffix = "macos";
 					break;
-				case Frida.Test.OS.TVOS:
+				case Telco.Test.OS.TVOS:
 					suffix = "tvos";
 					break;
 				default:
@@ -2147,7 +2147,7 @@ namespace Frida.HostSessionTest {
 
 		private static string target_name_of_other (string name) {
 			string suffix;
-			if (Frida.Test.os () == Frida.Test.OS.MACOS) {
+			if (Telco.Test.os () == Telco.Test.OS.MACOS) {
 				suffix = "macos32";
 			} else {
 				suffix = (Gum.query_ptrauth_support () == SUPPORTED) ? "ios64" : "ios32";
@@ -2251,7 +2251,7 @@ namespace Frida.HostSessionTest {
 
 					/*
 					string app_id = "com.apple.mobilesafari";
-					string? url = "https://www.frida.re/docs/ios/";
+					string? url = "https://www.telco.re/docs/ios/";
 					*/
 
 					string app_id = "com.atebits.Tweetie2";
@@ -2383,7 +2383,7 @@ namespace Frida.HostSessionTest {
 
 				var options = HostSpawnOptions ();
 				options.stdio = PIPE;
-				pid = yield host_session.spawn (Frida.Test.Labrats.path_to_executable ("sleeper"), options, cancellable);
+				pid = yield host_session.spawn (Telco.Test.Labrats.path_to_executable ("sleeper"), options, cancellable);
 
 				var session_id = yield host_session.attach (pid, make_parameters_dict (), cancellable);
 				var session = yield prov.link_agent_session (host_session, session_id, h, cancellable);
@@ -2442,19 +2442,19 @@ namespace Frida.HostSessionTest {
 		}
 
 		private static async void fork (Harness h) {
-			yield Unix.run_fork_scenario (h, Frida.Test.Labrats.path_to_executable ("forker"));
+			yield Unix.run_fork_scenario (h, Telco.Test.Labrats.path_to_executable ("forker"));
 		}
 
 		private static async void fork_plus_exec (Harness h, string method) {
-			yield Unix.run_fork_plus_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), method);
+			yield Unix.run_fork_plus_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), method);
 		}
 
 		private static async void bad_exec (Harness h) {
-			yield Unix.run_bad_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), "execv");
+			yield Unix.run_bad_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), "execv");
 		}
 
 		private static async void bad_then_good_exec (Harness h) {
-			yield Unix.run_exec_scenario (h, Frida.Test.Labrats.path_to_executable ("spawner"), "spawn-bad-then-good-path", "execv");
+			yield Unix.run_exec_scenario (h, Telco.Test.Labrats.path_to_executable ("spawner"), "spawn-bad-then-good-path", "execv");
 		}
 
 	}
@@ -2581,14 +2581,14 @@ namespace Frida.HostSessionTest {
 					yield;
 					waiting = false;
 				}
-				assert_true (parent_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (parent_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				while (child_detach_reason == null) {
 					waiting = true;
 					yield;
 					waiting = false;
 				}
-				assert_true (child_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (child_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				yield h.process_events ();
 				assert_true (parent_messages.size == 1);
@@ -2682,7 +2682,7 @@ namespace Frida.HostSessionTest {
 					yield;
 					waiting = false;
 				}
-				assert_true (child_pre_exec_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_REPLACED");
+				assert_true (child_pre_exec_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_REPLACED");
 
 				while (the_child == null) {
 					waiting = true;
@@ -2736,14 +2736,14 @@ namespace Frida.HostSessionTest {
 					yield;
 					waiting = false;
 				}
-				assert_true (child_post_exec_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (child_post_exec_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				while (parent_detach_reason == null) {
 					waiting = true;
 					yield;
 					waiting = false;
 				}
-				assert_true (parent_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (parent_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				yield h.process_events ();
 				assert_true (child_messages.size == 1);
@@ -2810,7 +2810,7 @@ namespace Frida.HostSessionTest {
 					yield;
 					waiting = false;
 				}
-				assert_true (pre_exec_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_REPLACED");
+				assert_true (pre_exec_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_REPLACED");
 
 				while (the_child == null) {
 					waiting = true;
@@ -2865,7 +2865,7 @@ namespace Frida.HostSessionTest {
 					yield;
 					waiting = false;
 				}
-				assert_true (post_exec_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (post_exec_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				yield h.process_events ();
 				assert_true (messages.size == 1);
@@ -2927,7 +2927,7 @@ namespace Frida.HostSessionTest {
 					yield;
 					waiting = false;
 				}
-				assert_true (detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				yield device_manager.close ();
 
@@ -3043,14 +3043,14 @@ namespace Frida.HostSessionTest {
 					yield;
 					waiting = false;
 				}
-				assert_true (child_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (child_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				while (parent_detach_reason == null) {
 					waiting = true;
 					yield;
 					waiting = false;
 				}
-				assert_true (parent_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (parent_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				yield h.process_events ();
 				assert_true (child_messages.size == 1);
@@ -3140,7 +3140,7 @@ namespace Frida.HostSessionTest {
 
 				var options = HostSpawnOptions ();
 				options.stdio = PIPE;
-				pid = yield host_session.spawn (Frida.Test.Labrats.path_to_executable ("sleeper"), options, cancellable);
+				pid = yield host_session.spawn (Telco.Test.Labrats.path_to_executable ("sleeper"), options, cancellable);
 
 				var session_id = yield host_session.attach (pid, make_parameters_dict (), cancellable);
 				var session = yield prov.link_agent_session (host_session, session_id, h, cancellable);
@@ -3204,7 +3204,7 @@ namespace Frida.HostSessionTest {
 				return;
 			}
 
-			var target_path = Frida.Test.Labrats.path_to_executable ("spawner");
+			var target_path = Telco.Test.Labrats.path_to_executable ("spawner");
 			var method = "CreateProcess";
 
 			try {
@@ -3309,14 +3309,14 @@ namespace Frida.HostSessionTest {
 					yield;
 					waiting = false;
 				}
-				assert_true (child_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (child_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				while (parent_detach_reason == null) {
 					waiting = true;
 					yield;
 					waiting = false;
 				}
-				assert_true (parent_detach_reason == "FRIDA_SESSION_DETACH_REASON_PROCESS_TERMINATED");
+				assert_true (parent_detach_reason == "TELCO_SESSION_DETACH_REASON_PROCESS_TERMINATED");
 
 				yield h.process_events ();
 				assert_true (child_messages.size == 1);
@@ -3397,7 +3397,7 @@ namespace Frida.HostSessionTest {
 			try {
 				Cancellable? cancellable = null;
 
-				stdout.printf ("connecting to frida-server\n");
+				stdout.printf ("connecting to telco-server\n");
 				var host_session = yield prov.create (null, cancellable);
 				stdout.printf ("enumerating processes\n");
 				var processes = yield host_session.enumerate_processes (make_parameters_dict (), cancellable);
@@ -3405,7 +3405,7 @@ namespace Frida.HostSessionTest {
 
 				HostProcessInfo? process = null;
 				foreach (var p in processes) {
-					if (p.name == "hello-frida") {
+					if (p.name == "hello-telco") {
 						process = p;
 						break;
 					}
@@ -3618,7 +3618,7 @@ namespace Frida.HostSessionTest {
 				""";
 
 				try {
-					var plist = new Frida.Fruity.Plist.from_xml (xml);
+					var plist = new Telco.Fruity.Plist.from_xml (xml);
 					assert_true (plist.size == 3);
 					assert_true (plist.get_integer ("DeviceID") == 2);
 					assert_true (plist.get_string ("MessageType") == "Attached");
@@ -3644,24 +3644,24 @@ namespace Frida.HostSessionTest {
 					assert_true (extra_strings.length == 2);
 					assert_true (extra_strings.get_string (0) == "A");
 					assert_true (extra_strings.get_string (1) == "B");
-				} catch (Frida.Fruity.PlistError e) {
+				} catch (Telco.Fruity.PlistError e) {
 					printerr ("%s\n", e.message);
 					assert_not_reached ();
 				}
 			}
 
 			private static void to_xml_yields_complete_document () {
-				var plist = new Frida.Fruity.Plist ();
+				var plist = new Telco.Fruity.Plist ();
 				plist.set_string ("MessageType", "Detached");
 				plist.set_integer ("DeviceID", 2);
 
-				var properties = new Frida.Fruity.PlistDict ();
+				var properties = new Telco.Fruity.PlistDict ();
 				properties.set_string ("ConnectionType", "USB");
 				properties.set_integer ("DeviceID", 2);
 				properties.set_boolean ("ExtraBoolTrue", true);
 				properties.set_boolean ("ExtraBoolFalse", false);
 				properties.set_bytes ("ExtraData", new Bytes ({ 0x01, 0x02, 0x03 }));
-				var extra_strings = new Frida.Fruity.PlistArray ();
+				var extra_strings = new Telco.Fruity.PlistArray ();
 				extra_strings.add_string ("A");
 				extra_strings.add_string ("B");
 				properties.set_array ("ExtraStrings", extra_strings);
@@ -3761,14 +3761,14 @@ namespace Frida.HostSessionTest {
 
 			string device_serial = "<device-serial>";
 			string debuggable_app = "<app-id>";
-			string gadget_path = "/path/to/frida-gadget-arm64.so";
+			string gadget_path = "/path/to/telco-gadget-arm64.so";
 			Cancellable? cancellable = null;
 
 			try {
 				var gadget_file = File.new_for_path (gadget_path);
 				InputStream gadget = yield gadget_file.read_async (Priority.DEFAULT, cancellable);
 
-				var details = yield Frida.Droidy.Injector.inject (gadget, debuggable_app, device_serial, cancellable);
+				var details = yield Telco.Droidy.Injector.inject (gadget, debuggable_app, device_serial, cancellable);
 
 				printerr ("inject() => %p\n", details);
 			} catch (GLib.Error e) {
@@ -3792,7 +3792,7 @@ namespace Frida.HostSessionTest {
 		return message.get_string_member ("payload");
 	}
 
-	public class Harness : Frida.Test.AsyncHarness, AgentMessageSink {
+	public class Harness : Telco.Test.AsyncHarness, AgentMessageSink {
 		public signal void message_from_script (AgentScriptId script_id, string message, Bytes? data);
 
 		public HostSessionService service {
@@ -3804,11 +3804,11 @@ namespace Frida.HostSessionTest {
 
 		private Gee.ArrayList<HostSessionProvider> available_providers = new Gee.ArrayList<HostSessionProvider> ();
 
-		public Harness (owned Frida.Test.AsyncHarness.TestSequenceFunc func) {
+		public Harness (owned Telco.Test.AsyncHarness.TestSequenceFunc func) {
 			base ((owned) func);
 		}
 
-		public Harness.without_timeout (owned Frida.Test.AsyncHarness.TestSequenceFunc func) {
+		public Harness.without_timeout (owned Telco.Test.AsyncHarness.TestSequenceFunc func) {
 			base ((owned) func);
 			timeout = 0;
 		}

@@ -1,4 +1,4 @@
-#include "frida-selinux.h"
+#include "telco-selinux.h"
 
 #include <fcntl.h>
 #include <gio/gio.h>
@@ -6,12 +6,12 @@
 #include <sepol/policydb/policydb.h>
 #include <sepol/policydb/services.h>
 
-#define FRIDA_SELINUX_ERROR frida_selinux_error_quark ()
+#define TELCO_SELINUX_ERROR telco_selinux_error_quark ()
 
-typedef struct _FridaSELinuxRule FridaSELinuxRule;
-typedef enum _FridaSELinuxErrorEnum FridaSELinuxErrorEnum;
+typedef struct _TelcoSELinuxRule TelcoSELinuxRule;
+typedef enum _TelcoSELinuxErrorEnum TelcoSELinuxErrorEnum;
 
-struct _FridaSELinuxRule
+struct _TelcoSELinuxRule
 {
   const gchar * sources[4];
   const gchar * target;
@@ -19,29 +19,29 @@ struct _FridaSELinuxRule
   const gchar * permissions[16];
 };
 
-enum _FridaSELinuxErrorEnum
+enum _TelcoSELinuxErrorEnum
 {
-  FRIDA_SELINUX_ERROR_POLICY_FORMAT_NOT_SUPPORTED,
-  FRIDA_SELINUX_ERROR_TYPE_NOT_FOUND,
-  FRIDA_SELINUX_ERROR_CLASS_NOT_FOUND,
-  FRIDA_SELINUX_ERROR_PERMISSION_NOT_FOUND
+  TELCO_SELINUX_ERROR_POLICY_FORMAT_NOT_SUPPORTED,
+  TELCO_SELINUX_ERROR_TYPE_NOT_FOUND,
+  TELCO_SELINUX_ERROR_CLASS_NOT_FOUND,
+  TELCO_SELINUX_ERROR_PERMISSION_NOT_FOUND
 };
 
-static gboolean frida_load_policy (const gchar * filename, policydb_t * db, gchar ** data, GError ** error);
-static gboolean frida_save_policy (const gchar * filename, policydb_t * db, GError ** error);
-static type_datum_t * frida_ensure_type (policydb_t * db, const gchar * type_name, guint num_attributes, ...);
-static void frida_add_type_to_class_constraints_referencing_attribute (policydb_t * db, uint32_t type_id, uint32_t attribute_id);
-static gboolean frida_ensure_permissive (policydb_t * db, const gchar * type_name, GError ** error);
-static avtab_datum_t * frida_ensure_rule (policydb_t * db, const gchar * s, const gchar * t, const gchar * c, const gchar * p, GError ** error);
+static gboolean telco_load_policy (const gchar * filename, policydb_t * db, gchar ** data, GError ** error);
+static gboolean telco_save_policy (const gchar * filename, policydb_t * db, GError ** error);
+static type_datum_t * telco_ensure_type (policydb_t * db, const gchar * type_name, guint num_attributes, ...);
+static void telco_add_type_to_class_constraints_referencing_attribute (policydb_t * db, uint32_t type_id, uint32_t attribute_id);
+static gboolean telco_ensure_permissive (policydb_t * db, const gchar * type_name, GError ** error);
+static avtab_datum_t * telco_ensure_rule (policydb_t * db, const gchar * s, const gchar * t, const gchar * c, const gchar * p, GError ** error);
 
-static gboolean frida_set_file_contents (const gchar * filename, const gchar * contents, gssize length, GError ** error);
+static gboolean telco_set_file_contents (const gchar * filename, const gchar * contents, gssize length, GError ** error);
 
-static const FridaSELinuxRule frida_selinux_rules[] =
+static const TelcoSELinuxRule telco_selinux_rules[] =
 {
   { { "domain", NULL }, "domain", "process", { "execmem", NULL } },
-  { { "domain", NULL }, "frida_file", "dir", { "search", NULL } },
-  { { "domain", NULL }, "frida_file", "file", { "open", "read", "getattr", "execute", "?map", NULL } },
-  { { "domain", NULL }, "frida_memfd", "file", { "open", "read", "write", "getattr", "execute", "?map", NULL } },
+  { { "domain", NULL }, "telco_file", "dir", { "search", NULL } },
+  { { "domain", NULL }, "telco_file", "file", { "open", "read", "getattr", "execute", "?map", NULL } },
+  { { "domain", NULL }, "telco_memfd", "file", { "open", "read", "write", "getattr", "execute", "?map", NULL } },
   { { "domain", NULL }, "shell_data_file", "dir", { "search", NULL } },
   { { "domain", NULL }, "zygote_exec", "file", { "execute", NULL } },
   { { "domain", NULL }, "$self", "process", { "sigchld", NULL } },
@@ -53,10 +53,10 @@ static const FridaSELinuxRule frida_selinux_rules[] =
   { { "system_server", NULL, }, "?apex_art_data_file", "file", { "execute", NULL } },
 };
 
-G_DEFINE_QUARK (frida-selinux-error-quark, frida_selinux_error)
+G_DEFINE_QUARK (telco-selinux-error-quark, telco_selinux_error)
 
 void
-frida_selinux_patch_policy (void)
+telco_selinux_patch_policy (void)
 {
   const gchar * system_policy = "/sys/fs/selinux/policy";
   policydb_t db;
@@ -72,7 +72,7 @@ frida_selinux_patch_policy (void)
   if (!g_file_test (system_policy, G_FILE_TEST_EXISTS))
     return;
 
-  if (!frida_load_policy (system_policy, &db, &db_data, &error))
+  if (!telco_load_policy (system_policy, &db, &db_data, &error))
   {
     g_printerr ("Unable to load SELinux policy from the kernel: %s\n", error->message);
     g_error_free (error);
@@ -82,23 +82,23 @@ frida_selinux_patch_policy (void)
   res = policydb_load_isids (&db, &sidtab);
   g_assert (res == 0);
 
-  if (frida_ensure_type (&db, "frida_file", 2, "file_type", "mlstrustedobject", &error) == NULL)
+  if (telco_ensure_type (&db, "telco_file", 2, "file_type", "mlstrustedobject", &error) == NULL)
   {
     g_printerr ("Unable to add SELinux type: %s\n", error->message);
     g_clear_error (&error);
     goto beach;
   }
 
-  if (frida_ensure_type (&db, "frida_memfd", 2, "file_type", "mlstrustedobject", &error) == NULL)
+  if (telco_ensure_type (&db, "telco_memfd", 2, "file_type", "mlstrustedobject", &error) == NULL)
   {
     g_printerr ("Unable to add SELinux type: %s\n", error->message);
     g_clear_error (&error);
     goto beach;
   }
 
-  for (rule_index = 0; rule_index != G_N_ELEMENTS (frida_selinux_rules); rule_index++)
+  for (rule_index = 0; rule_index != G_N_ELEMENTS (telco_selinux_rules); rule_index++)
   {
-    const FridaSELinuxRule * rule = &frida_selinux_rules[rule_index];
+    const TelcoSELinuxRule * rule = &telco_selinux_rules[rule_index];
     const gchar * target = rule->target;
     const gchar * const * source_cursor;
     const gchar * const * perm_entry;
@@ -134,9 +134,9 @@ frida_selinux_patch_policy (void)
           perm++;
         }
 
-        if (frida_ensure_rule (&db, source, target, rule->klass, perm, &error) == NULL)
+        if (telco_ensure_rule (&db, source, target, rule->klass, perm, &error) == NULL)
         {
-          if (!g_error_matches (error, FRIDA_SELINUX_ERROR, FRIDA_SELINUX_ERROR_PERMISSION_NOT_FOUND) || is_important)
+          if (!g_error_matches (error, TELCO_SELINUX_ERROR, TELCO_SELINUX_ERROR_PERMISSION_NOT_FOUND) || is_important)
             g_printerr ("Unable to add SELinux rule: %s\n", error->message);
           g_clear_error (&error);
         }
@@ -144,7 +144,7 @@ frida_selinux_patch_policy (void)
     }
   }
 
-  if (!frida_save_policy ("/sys/fs/selinux/load", &db, &error))
+  if (!telco_save_policy ("/sys/fs/selinux/load", &db, &error))
   {
     gboolean success = FALSE, probably_in_emulator;
 
@@ -153,9 +153,9 @@ frida_selinux_patch_policy (void)
     {
       g_clear_error (&error);
 
-      success = frida_ensure_permissive (&db, "shell", &error);
+      success = telco_ensure_permissive (&db, "shell", &error);
       if (success)
-        success = frida_save_policy ("/sys/fs/selinux/load", &db, &error);
+        success = telco_save_policy ("/sys/fs/selinux/load", &db, &error);
 
       security_setenforce (1);
     }
@@ -173,7 +173,7 @@ beach:
 }
 
 static gboolean
-frida_load_policy (const gchar * filename, policydb_t * db, gchar ** data, GError ** error)
+telco_load_policy (const gchar * filename, policydb_t * db, gchar ** data, GError ** error)
 {
   policy_file_t file;
   int res;
@@ -190,7 +190,7 @@ frida_load_policy (const gchar * filename, policydb_t * db, gchar ** data, GErro
   res = policydb_read (db, &file, FALSE);
   if (res != 0)
   {
-    g_set_error (error, FRIDA_SELINUX_ERROR, FRIDA_SELINUX_ERROR_POLICY_FORMAT_NOT_SUPPORTED, "unsupported policy database format");
+    g_set_error (error, TELCO_SELINUX_ERROR, TELCO_SELINUX_ERROR_POLICY_FORMAT_NOT_SUPPORTED, "unsupported policy database format");
     policydb_destroy (db);
     g_free (*data);
     return FALSE;
@@ -200,7 +200,7 @@ frida_load_policy (const gchar * filename, policydb_t * db, gchar ** data, GErro
 }
 
 static gboolean
-frida_save_policy (const gchar * filename, policydb_t * db, GError ** error)
+telco_save_policy (const gchar * filename, policydb_t * db, GError ** error)
 {
   void * data;
   size_t size;
@@ -209,11 +209,11 @@ frida_save_policy (const gchar * filename, policydb_t * db, GError ** error)
   res = policydb_to_image (NULL, db, &data, &size);
   g_assert (res == 0);
 
-  return frida_set_file_contents (filename, data, size, error);
+  return telco_set_file_contents (filename, data, size, error);
 }
 
 static type_datum_t *
-frida_ensure_type (policydb_t * db, const gchar * type_name, guint n_attributes, ...)
+telco_ensure_type (policydb_t * db, const gchar * type_name, guint n_attributes, ...)
 {
   type_datum_t * type;
   uint32_t type_id;
@@ -273,11 +273,11 @@ frida_ensure_type (policydb_t * db, const gchar * type_name, guint n_attributes,
       ebitmap_set_bit (&db->type_attr_map[type_id - 1], attribute_id - 1, 1);
       ebitmap_set_bit (&db->attr_type_map[attribute_id - 1], type_id - 1, 1);
 
-      frida_add_type_to_class_constraints_referencing_attribute (db, type_id, attribute_id);
+      telco_add_type_to_class_constraints_referencing_attribute (db, type_id, attribute_id);
     }
     else if (pending_error == NULL)
     {
-      g_set_error (&pending_error, FRIDA_SELINUX_ERROR, FRIDA_SELINUX_ERROR_TYPE_NOT_FOUND, "attribute type “%s” does not exist", attribute_name);
+      g_set_error (&pending_error, TELCO_SELINUX_ERROR, TELCO_SELINUX_ERROR_TYPE_NOT_FOUND, "attribute type “%s” does not exist", attribute_name);
     }
   }
 
@@ -291,7 +291,7 @@ frida_ensure_type (policydb_t * db, const gchar * type_name, guint n_attributes,
 }
 
 static void
-frida_add_type_to_class_constraints_referencing_attribute (policydb_t * db, uint32_t type_id, uint32_t attribute_id)
+telco_add_type_to_class_constraints_referencing_attribute (policydb_t * db, uint32_t type_id, uint32_t attribute_id)
 {
   uint32_t class_index;
 
@@ -320,7 +320,7 @@ frida_add_type_to_class_constraints_referencing_attribute (policydb_t * db, uint
 }
 
 static gboolean
-frida_ensure_permissive (policydb_t * db, const gchar * type_name, GError ** error)
+telco_ensure_permissive (policydb_t * db, const gchar * type_name, GError ** error)
 {
   type_datum_t * type;
   int res G_GNUC_UNUSED;
@@ -328,7 +328,7 @@ frida_ensure_permissive (policydb_t * db, const gchar * type_name, GError ** err
   type = hashtab_search (db->p_types.table, (char *) type_name);
   if (type == NULL)
   {
-    g_set_error (error, FRIDA_SELINUX_ERROR, FRIDA_SELINUX_ERROR_TYPE_NOT_FOUND, "type %s does not exist", type_name);
+    g_set_error (error, TELCO_SELINUX_ERROR, TELCO_SELINUX_ERROR_TYPE_NOT_FOUND, "type %s does not exist", type_name);
     return FALSE;
   }
 
@@ -339,7 +339,7 @@ frida_ensure_permissive (policydb_t * db, const gchar * type_name, GError ** err
 }
 
 static avtab_datum_t *
-frida_ensure_rule (policydb_t * db, const gchar * s, const gchar * t, const gchar * c, const gchar * p, GError ** error)
+telco_ensure_rule (policydb_t * db, const gchar * s, const gchar * t, const gchar * c, const gchar * p, GError ** error)
 {
   type_datum_t * source, * target;
   gchar * self_type = NULL;
@@ -352,7 +352,7 @@ frida_ensure_rule (policydb_t * db, const gchar * s, const gchar * t, const gcha
   source = hashtab_search (db->p_types.table, (char *) s);
   if (source == NULL)
   {
-    g_set_error (error, FRIDA_SELINUX_ERROR, FRIDA_SELINUX_ERROR_TYPE_NOT_FOUND, "source type “%s” does not exist", s);
+    g_set_error (error, TELCO_SELINUX_ERROR, TELCO_SELINUX_ERROR_TYPE_NOT_FOUND, "source type “%s” does not exist", s);
     return NULL;
   }
 
@@ -379,14 +379,14 @@ frida_ensure_rule (policydb_t * db, const gchar * s, const gchar * t, const gcha
 
   if (target == NULL)
   {
-    g_set_error (error, FRIDA_SELINUX_ERROR, FRIDA_SELINUX_ERROR_TYPE_NOT_FOUND, "target type “%s” does not exist", t);
+    g_set_error (error, TELCO_SELINUX_ERROR, TELCO_SELINUX_ERROR_TYPE_NOT_FOUND, "target type “%s” does not exist", t);
     return NULL;
   }
 
   klass = hashtab_search (db->p_classes.table, (char *) c);
   if (klass == NULL)
   {
-    g_set_error (error, FRIDA_SELINUX_ERROR, FRIDA_SELINUX_ERROR_CLASS_NOT_FOUND, "class “%s” does not exist", c);
+    g_set_error (error, TELCO_SELINUX_ERROR, TELCO_SELINUX_ERROR_CLASS_NOT_FOUND, "class “%s” does not exist", c);
     return NULL;
   }
 
@@ -395,7 +395,7 @@ frida_ensure_rule (policydb_t * db, const gchar * s, const gchar * t, const gcha
     perm = hashtab_search (klass->comdatum->permissions.table, (char *) p);
   if (perm == NULL)
   {
-    g_set_error (error, FRIDA_SELINUX_ERROR, FRIDA_SELINUX_ERROR_PERMISSION_NOT_FOUND, "perm “%s” does not exist on the “%s” class", p, c);
+    g_set_error (error, TELCO_SELINUX_ERROR, TELCO_SELINUX_ERROR_PERMISSION_NOT_FOUND, "perm “%s” does not exist on the “%s” class", p, c);
     return NULL;
   }
   perm_bit = 1U << (perm->s.value - 1);
@@ -426,7 +426,7 @@ frida_ensure_rule (policydb_t * db, const gchar * s, const gchar * t, const gcha
 /* Just like g_file_set_contents() except there's no temporary file involved. */
 
 static gboolean
-frida_set_file_contents (const gchar * filename, const gchar * contents, gssize length, GError ** error)
+telco_set_file_contents (const gchar * filename, const gchar * contents, gssize length, GError ** error)
 {
   int fd, res;
   gsize offset, size;

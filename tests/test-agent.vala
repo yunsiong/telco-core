@@ -1,4 +1,4 @@
-namespace Frida.AgentTest {
+namespace Telco.AgentTest {
 	public static void add_tests () {
 		GLib.Test.add_func ("/Agent/Script/load-and-receive-messages", () => {
 			var h = new Harness ((h) => Script.load_and_receive_messages.begin (h as Harness));
@@ -43,11 +43,11 @@ namespace Frida.AgentTest {
 				assert_not_reached ();
 			}
 
-			func (1337, "Frida rocks");
+			func (1337, "Telco rocks");
 
 			var message = yield h.wait_for_message ();
 			assert_true (message.script_id.handle == script_id.handle);
-			assert_true (message.text == "{\"type\":\"send\",\"payload\":{\"first_argument\":1337,\"second_argument\":\"Frida rocks\"}}");
+			assert_true (message.text == "{\"type\":\"send\",\"payload\":{\"first_argument\":1337,\"second_argument\":\"Telco rocks\"}}");
 
 			yield h.unload_agent ();
 
@@ -219,7 +219,7 @@ Interceptor.attach(Module.getExportByName('/usr/lib/system/libsystem_kernel.dyli
 
 					var request = new Json.Builder ()
 						.begin_array ()
-						.add_string_value ("frida:rpc")
+						.add_string_value ("telco:rpc")
 						.add_int_value (id)
 						.add_string_value ("call")
 						.add_string_value ("prepareForLaunch")
@@ -250,7 +250,7 @@ Interceptor.attach(Module.getExportByName('/usr/lib/system/libsystem_kernel.dyli
 						}
 
 						reader.read_element (0);
-						assert_true (reader.get_string_value () == "frida:rpc");
+						assert_true (reader.get_string_value () == "telco:rpc");
 						reader.end_element ();
 
 						reader.read_element (1);
@@ -270,7 +270,7 @@ Interceptor.attach(Module.getExportByName('/usr/lib/system/libsystem_kernel.dyli
 						break;
 					}
 
-					var child = Frida.Test.Process.start ("/bin/ls", new string[] {
+					var child = Telco.Test.Process.start ("/bin/ls", new string[] {
 						"UIKitApplication:foo.bar.Baz[0x1234]"
 					});
 
@@ -394,10 +394,10 @@ Interceptor.attach(Module.getExportByName('libsystem_kernel.dylib', 'open'), () 
 		public extern static uint target_function (int level, string message);
 	}
 
-	private class Harness : Frida.Test.AsyncHarness, AgentController, AgentMessageSink {
+	private class Harness : Telco.Test.AsyncHarness, AgentController, AgentMessageSink {
 		private GLib.Module module;
 		[CCode (has_target = false)]
-		private delegate void AgentMainFunc (string data, ref Frida.UnloadPolicy unload_policy, void * opaque_injector_state);
+		private delegate void AgentMainFunc (string data, ref Telco.UnloadPolicy unload_policy, void * opaque_injector_state);
 		private AgentMainFunc main_impl;
 #if LINUX
 		private FileDescriptor agent_ctrlfd_for_peer;
@@ -413,7 +413,7 @@ Interceptor.attach(Module.getExportByName('libsystem_kernel.dylib', 'open'), () 
 
 		private Gee.Queue<AgentMessage?> message_queue = new Gee.LinkedList<AgentMessage?> ();
 
-		public Harness (owned Frida.Test.AsyncHarness.TestSequenceFunc func) {
+		public Harness (owned Telco.Test.AsyncHarness.TestSequenceFunc func) {
 			base ((owned) func);
 		}
 
@@ -422,11 +422,11 @@ Interceptor.attach(Module.getExportByName('libsystem_kernel.dylib', 'open'), () 
 
 			string agent_filename;
 #if WINDOWS
-			var intermediate_root_dir = Path.get_dirname (Path.get_dirname (Frida.Test.Process.current.filename));
+			var intermediate_root_dir = Path.get_dirname (Path.get_dirname (Telco.Test.Process.current.filename));
 			if (sizeof (void *) == 4)
-				agent_filename = Path.build_filename (intermediate_root_dir, "frida-agent-32", "frida-agent-32.dll");
+				agent_filename = Path.build_filename (intermediate_root_dir, "telco-agent-32", "telco-agent-32.dll");
 			else
-				agent_filename = Path.build_filename (intermediate_root_dir, "frida-agent-64", "frida-agent-64.dll");
+				agent_filename = Path.build_filename (intermediate_root_dir, "telco-agent-64", "telco-agent-64.dll");
 #else
 			string shlib_extension;
 #if DARWIN
@@ -435,13 +435,13 @@ Interceptor.attach(Module.getExportByName('libsystem_kernel.dylib', 'open'), () 
 			shlib_extension = "so";
 #endif
 #if IOS || TVOS || ANDROID || QNX
-			var deployment_dir = Path.get_dirname (Frida.Test.Process.current.filename);
-			agent_filename = Path.build_filename (deployment_dir, "frida-agent." + shlib_extension);
+			var deployment_dir = Path.get_dirname (Telco.Test.Process.current.filename);
+			agent_filename = Path.build_filename (deployment_dir, "telco-agent." + shlib_extension);
 #else
-			var frida_root_dir = Path.get_dirname (Path.get_dirname (Frida.Test.Process.current.filename));
-			agent_filename = Path.build_filename (frida_root_dir, "lib", "frida", "frida-agent." + shlib_extension);
+			var telco_root_dir = Path.get_dirname (Path.get_dirname (Telco.Test.Process.current.filename));
+			agent_filename = Path.build_filename (telco_root_dir, "lib", "telco", "telco-agent." + shlib_extension);
 			if (!FileUtils.test (agent_filename, FileTest.EXISTS))
-				agent_filename = Path.build_filename (frida_root_dir, "lib", "agent", "frida-agent." + shlib_extension);
+				agent_filename = Path.build_filename (telco_root_dir, "lib", "agent", "telco-agent." + shlib_extension);
 #endif
 #endif
 
@@ -449,7 +449,7 @@ Interceptor.attach(Module.getExportByName('libsystem_kernel.dylib', 'open'), () 
 			assert_nonnull (module);
 
 			void * main_func_symbol;
-			var main_func_found = module.symbol ("frida_agent_main", out main_func_symbol);
+			var main_func_found = module.symbol ("telco_agent_main", out main_func_symbol);
 			assert_true (main_func_found);
 			main_impl = (AgentMainFunc) main_func_symbol;
 
@@ -484,7 +484,7 @@ Interceptor.attach(Module.getExportByName('libsystem_kernel.dylib', 'open'), () 
 			}
 #endif
 
-			main_thread = new Thread<bool> ("frida-test-agent-worker", agent_main_worker);
+			main_thread = new Thread<bool> ("telco-test-agent-worker", agent_main_worker);
 
 			try {
 				var stream = yield stream_request.wait_async (cancellable);
@@ -558,7 +558,7 @@ Interceptor.attach(Module.getExportByName('libsystem_kernel.dylib', 'open'), () 
 
 #if LINUX
 			var s = LinuxInjectorState ();
-			s.frida_ctrlfd = -1;
+			s.telco_ctrlfd = -1;
 			s.agent_ctrlfd = agent_ctrlfd_for_peer.steal ();
 			injector_state = &s;
 #endif

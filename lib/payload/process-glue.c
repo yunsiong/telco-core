@@ -1,4 +1,4 @@
-#include "frida-payload.h"
+#include "telco-payload.h"
 
 #ifdef HAVE_WINDOWS
 # define VC_EXTRALEAN
@@ -14,7 +14,7 @@
 #endif
 
 guint
-frida_get_process_id (void)
+telco_get_process_id (void)
 {
 #ifdef HAVE_WINDOWS
   return GetCurrentProcessId ();
@@ -24,7 +24,7 @@ frida_get_process_id (void)
 }
 
 gpointer
-frida_get_current_pthread (void)
+telco_get_current_pthread (void)
 {
 #ifndef HAVE_WINDOWS
   return (gpointer) pthread_self ();
@@ -34,7 +34,7 @@ frida_get_current_pthread (void)
 }
 
 void
-frida_join_pthread (gpointer pthread)
+telco_join_pthread (gpointer pthread)
 {
 #ifndef HAVE_WINDOWS
   pthread_join ((pthread_t) pthread, NULL);
@@ -42,7 +42,7 @@ frida_join_pthread (gpointer pthread)
 }
 
 void
-frida_kill_process (guint pid)
+telco_kill_process (guint pid)
 {
 #ifdef HAVE_WINDOWS
   HANDLE process;
@@ -60,7 +60,7 @@ frida_kill_process (guint pid)
 }
 
 gchar *
-frida_try_get_executable_path (void)
+telco_try_get_executable_path (void)
 {
 #ifdef HAVE_DARWIN
   uint32_t buf_size;

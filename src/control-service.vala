@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class ControlService : Object {
 		public HostSession host_session {
 			get;
@@ -608,10 +608,10 @@ namespace Frida {
 					registrations.add (connection.register_object (ObjectPath.HOST_SESSION, session));
 
 					AuthenticationService null_auth = new NullAuthenticationService ();
-					registrations.add (connection.register_object (Frida.ObjectPath.AUTHENTICATION_SERVICE, null_auth));
+					registrations.add (connection.register_object (Telco.ObjectPath.AUTHENTICATION_SERVICE, null_auth));
 
 					TransportBroker broker = this;
-					registrations.add (connection.register_object (Frida.ObjectPath.TRANSPORT_BROKER, broker));
+					registrations.add (connection.register_object (Telco.ObjectPath.TRANSPORT_BROKER, broker));
 				} catch (IOError e) {
 					assert_not_reached ();
 				}

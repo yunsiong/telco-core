@@ -1,7 +1,7 @@
-#include "frida-agent.h"
+#include "telco-agent.h"
 
-#include "frida-base.h"
-#include "frida-payload.h"
+#include "telco-base.h"
+#include "telco-payload.h"
 
 #ifdef HAVE_ANDROID
 # include <jni.h>
@@ -14,7 +14,7 @@
 #endif
 
 void
-_frida_agent_environment_init (void)
+_telco_agent_environment_init (void)
 {
 #ifdef HAVE_MUSL
   static gboolean been_here = FALSE;
@@ -27,14 +27,14 @@ _frida_agent_environment_init (void)
   gum_init_embedded ();
   gio_init ();
 
-  g_thread_set_garbage_handler (_frida_agent_on_pending_thread_garbage, NULL);
+  g_thread_set_garbage_handler (_telco_agent_on_pending_thread_garbage, NULL);
 
 #ifdef HAVE_GIOOPENSSL
   g_io_module_openssl_register ();
 #endif
 
   gum_script_backend_get_type (); /* Warm up */
-  frida_error_quark (); /* Initialize early so GDBus will pick it up */
+  telco_error_quark (); /* Initialize early so GDBus will pick it up */
 
 #if defined (HAVE_ANDROID) && __ANDROID_API__ < __ANDROID_API_L__
   /*
@@ -46,7 +46,7 @@ _frida_agent_environment_init (void)
 }
 
 void
-_frida_agent_environment_deinit (void)
+_telco_agent_environment_deinit (void)
 {
 #ifndef HAVE_MUSL
   gum_shutdown ();
@@ -56,10 +56,10 @@ _frida_agent_environment_deinit (void)
   gio_deinit ();
   gum_deinit_embedded ();
 
-  frida_run_atexit_handlers ();
+  telco_run_atexit_handlers ();
 
 # ifdef HAVE_DARWIN
-  /* Do what frida_deinit_memory() does on the other platforms. */
+  /* Do what telco_deinit_memory() does on the other platforms. */
   gum_internal_heap_unref ();
 # endif
 #endif
@@ -70,9 +70,9 @@ _frida_agent_environment_deinit (void)
 jint
 JNI_OnLoad (JavaVM * vm, void * reserved)
 {
-  FridaAgentBridgeState * state = reserved;
+  TelcoAgentBridgeState * state = reserved;
 
-  frida_agent_main (state->agent_parameters, &state->unload_policy, state->injector_state);
+  telco_agent_main (state->agent_parameters, &state->unload_policy, state->injector_state);
 
   return JNI_VERSION_1_6;
 }

@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class FileMonitor : Object {
 		public signal void change (string file_path, string? other_file_path, FileMonitorEvent event);
 

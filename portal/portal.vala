@@ -1,4 +1,4 @@
-namespace Frida.Portal {
+namespace Telco.Portal {
 	private static Application application;
 
 	private static bool output_version = false;

@@ -1,5 +1,5 @@
-[CCode (gir_namespace = "FridaDroidyInjector", gir_version = "1.0")]
-namespace Frida.Droidy.Injector {
+[CCode (gir_namespace = "TelcoDroidyInjector", gir_version = "1.0")]
+namespace Telco.Droidy.Injector {
 	public static async GadgetDetails inject (InputStream gadget, string package, string device_serial, Cancellable? cancellable = null)
 			throws Error, IOError {
 		var session = new Session (gadget, package, device_serial);
@@ -77,11 +77,11 @@ namespace Frida.Droidy.Injector {
 
 		private async GadgetDetails inject_gadget (Cancellable? cancellable) throws Error, IOError {
 			string instance_id = Uuid.string_random ().replace ("-", "");
-			string so_path_shared = "/data/local/tmp/frida-gadget-" + instance_id + ".so";
+			string so_path_shared = "/data/local/tmp/telco-gadget-" + instance_id + ".so";
 			string so_path_app = "/data/data/" + package + "/gadget.so";
-			string config_path_shared = "/data/local/tmp/frida-gadget-" + instance_id + ".config";
+			string config_path_shared = "/data/local/tmp/telco-gadget-" + instance_id + ".config";
 			string config_path_app = "/data/data/" + package + "/gadget.config";
-			string unix_socket_path = "frida:" + package;
+			string unix_socket_path = "telco:" + package;
 
 			bool waiting = false;
 			uint target_pid = 0;

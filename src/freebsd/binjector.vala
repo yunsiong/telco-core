@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class Binjector : Object, Injector {
 		public signal void output (uint pid, int fd, uint8[] data);
 

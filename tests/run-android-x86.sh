@@ -2,13 +2,13 @@
 
 arch=x86
 
-remote_prefix=/data/local/tmp/frida-tests-$arch
+remote_prefix=/data/local/tmp/telco-tests-$arch
 
 core_tests=$(dirname "$0")
-cd "$core_tests/../../build/tmp-android-$arch/frida-core" || exit 1
-. ../../frida-env-macos-x86_64.rc
+cd "$core_tests/../../build/tmp-android-$arch/telco-core" || exit 1
+. ../../telco-env-macos-x86_64.rc
 ninja || exit 1
 cd tests
 adb shell "mkdir $remote_prefix"
-adb push frida-tests labrats ../lib/agent/frida-agent.so $remote_prefix || exit 1
-adb shell "$remote_prefix/frida-tests $@"
+adb push telco-tests labrats ../lib/agent/telco-agent.so $remote_prefix || exit 1
+adb shell "$remote_prefix/telco-tests $@"

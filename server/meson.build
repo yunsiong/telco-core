@@ -15,33 +15,33 @@ endif
 extra_link_args = []
 extra_link_depends = []
 if host_os_family == 'darwin'
-  symlist = 'frida-server.symbols'
+  symlist = 'telco-server.symbols'
   extra_link_args += ['-Wl,-exported_symbols_list,' + join_paths(meson.current_source_dir(), symlist)]
   extra_link_depends += [symlist]
 elif host_os_family != 'windows'
-  symscript = 'frida-server.version'
+  symscript = 'telco-server.version'
   extra_link_args += ['-Wl,--version-script,' + join_paths(meson.current_source_dir(), symscript)]
   extra_link_depends += [symscript]
 endif
 if host_os == 'macos'
-  server_plist = 'frida-server.plist'
+  server_plist = 'telco-server.plist'
   extra_link_args += ['-Wl,-sectcreate,__TEXT,__info_plist,' + join_paths(meson.current_source_dir(), server_plist)]
   extra_link_depends += [server_plist]
 endif
 
-raw_server = executable('frida-server-raw', server_sources,
+raw_server = executable('telco-server-raw', server_sources,
   vala_args: ['--pkg=posix'],
   link_args: extra_link_args,
   link_depends: extra_link_depends,
   dependencies: [core_dep],
 )
 
-custom_target('frida-server',
+custom_target('telco-server',
   input: [
     raw_server,
-    'frida-server.xcent',
+    'telco-server.xcent',
   ],
-  output: 'frida-server' + exe_suffix,
+  output: 'telco-server' + exe_suffix,
   command: [
     files('post-process.sh'),
     '@INPUT@',

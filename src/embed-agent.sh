@@ -12,13 +12,13 @@ lipo=$9
 agent_dbghelp_prefix=${10}
 agent_symsrv_prefix=${11}
 
-priv_dir="$output_dir/frida-agent@emb"
+priv_dir="$output_dir/telco-agent@emb"
 
 mkdir -p "$priv_dir"
 
 collect_windows_agent ()
 {
-  embedded_agent="$priv_dir/frida-agent-$2.dll"
+  embedded_agent="$priv_dir/telco-agent-$2.dll"
   embedded_dbghelp="$priv_dir/dbghelp-$2.dll"
   embedded_symsrv="$priv_dir/symsrv-$2.dll"
   if [ -f "$1" ]; then
@@ -35,7 +35,7 @@ collect_windows_agent ()
 
 collect_unix_agent ()
 {
-  embedded_agent="$priv_dir/frida-agent-$2.so"
+  embedded_agent="$priv_dir/telco-agent-$2.so"
   if [ -f "$1" ]; then
     cp "$1" "$embedded_agent" || exit 1
   else
@@ -51,10 +51,10 @@ case $host_os in
     collect_windows_agent "$agent_modern" 64
     collect_windows_agent "$agent_legacy" 32
 
-    exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/frida-data-agent" "${embedded_assets[@]}"
+    exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/telco-data-agent" "${embedded_assets[@]}"
     ;;
   macos|ios|watchos|tvos)
-    embedded_agent="$priv_dir/frida-agent.dylib"
+    embedded_agent="$priv_dir/telco-agent.dylib"
 
     if [ -f "$agent_modern" -a -f "$agent_legacy" ]; then
       "$lipo" "$agent_modern" "$agent_legacy" -create -output "$embedded_agent" || exit 1
@@ -67,10 +67,10 @@ case $host_os in
       exit 1
     fi
 
-    exec "$resource_compiler" --toolchain=apple -c "$resource_config" -o "$output_dir/frida-data-agent" "$embedded_agent"
+    exec "$resource_compiler" --toolchain=apple -c "$resource_config" -o "$output_dir/telco-data-agent" "$embedded_agent"
     ;;
   freebsd|qnx)
-    embedded_agent="$priv_dir/frida-agent.so"
+    embedded_agent="$priv_dir/telco-agent.so"
 
     if [ -f "$agent_modern" ]; then
       cp "$agent_modern" "$embedded_agent" || exit 1
@@ -81,7 +81,7 @@ case $host_os in
       exit 1
     fi
 
-    exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/frida-data-agent" "$embedded_agent"
+    exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/telco-data-agent" "$embedded_agent"
     ;;
   *)
     embedded_assets=()
@@ -91,6 +91,6 @@ case $host_os in
     collect_unix_agent "$agent_emulated_modern" arm64
     collect_unix_agent "$agent_emulated_legacy" arm
 
-    exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/frida-data-agent" "${embedded_assets[@]}"
+    exec "$resource_compiler" --toolchain=gnu -c "$resource_config" -o "$output_dir/telco-data-agent" "${embedded_assets[@]}"
     ;;
 esac

@@ -2,7 +2,7 @@
 
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include "frida-base.h"
+#include "telco-base.h"
 
 #include <errno.h>
 #include <openssl/asn1.h>
@@ -14,15 +14,15 @@
 #include <openssl/x509.h>
 #include <usrsctp.h>
 
-static gchar * frida_steal_bio_to_string (BIO ** bio);
+static gchar * telco_steal_bio_to_string (BIO ** bio);
 
-static int frida_on_connection_output (void * addr, void * buffer, size_t length, uint8_t tos, uint8_t set_df);
-static void frida_on_debug_printf (const char * format, ...);
+static int telco_on_connection_output (void * addr, void * buffer, size_t length, uint8_t tos, uint8_t set_df);
+static void telco_on_debug_printf (const char * format, ...);
 
-static void frida_on_upcall (struct socket * sock, void * user_data, int flags);
+static void telco_on_upcall (struct socket * sock, void * user_data, int flags);
 
 void
-_frida_generate_certificate (guint8 ** cert_der, gint * cert_der_length, gchar ** cert_pem, gchar ** key_pem)
+_telco_generate_certificate (guint8 ** cert_der, gint * cert_der_length, gchar ** cert_pem, gchar ** key_pem)
 {
   X509 * x509;
   X509_NAME * name;
@@ -41,7 +41,7 @@ _frida_generate_certificate (guint8 ** cert_der, gint * cert_der_length, gchar *
 
   name = X509_get_subject_name (x509);
   X509_NAME_add_entry_by_txt (name, "C", MBSTRING_ASC, (const unsigned char *) "CA", -1, -1, 0);
-  X509_NAME_add_entry_by_txt (name, "O", MBSTRING_ASC, (const unsigned char *) "Frida", -1, -1, 0);
+  X509_NAME_add_entry_by_txt (name, "O", MBSTRING_ASC, (const unsigned char *) "Telco", -1, -1, 0);
   X509_NAME_add_entry_by_txt (name, "CN", MBSTRING_ASC, (const unsigned char *) "lolcathost", -1, -1, 0);
   X509_set_issuer_name (x509, name);
 
@@ -65,18 +65,18 @@ _frida_generate_certificate (guint8 ** cert_der, gint * cert_der_length, gchar *
 
   bio = BIO_new (BIO_s_mem ());
   PEM_write_bio_X509 (bio, x509);
-  *cert_pem = frida_steal_bio_to_string (&bio);
+  *cert_pem = telco_steal_bio_to_string (&bio);
 
   bio = BIO_new (BIO_s_mem ());
   PEM_write_bio_PrivateKey (bio, pkey, NULL, NULL, 0, NULL, NULL);
-  *key_pem = frida_steal_bio_to_string (&bio);
+  *key_pem = telco_steal_bio_to_string (&bio);
 
   EVP_PKEY_free (pkey);
   X509_free (x509);
 }
 
 static gchar *
-frida_steal_bio_to_string (BIO ** bio)
+telco_steal_bio_to_string (BIO ** bio)
 {
   gchar * result;
   long n;
@@ -91,11 +91,11 @@ frida_steal_bio_to_string (BIO ** bio)
 }
 
 void
-_frida_sctp_connection_initialize_sctp_backend (void)
+_telco_sctp_connection_initialize_sctp_backend (void)
 {
   const int msec_per_sec = 1000;
 
-  usrsctp_init_nothreads (0, frida_on_connection_output, frida_on_debug_printf);
+  usrsctp_init_nothreads (0, telco_on_connection_output, telco_on_debug_printf);
 
   usrsctp_sysctl_set_sctp_sendspace (256 * 1024);
   usrsctp_sysctl_set_sctp_recvspace (256 * 1024);
@@ -128,23 +128,23 @@ _frida_sctp_connection_initialize_sctp_backend (void)
 }
 
 static int
-frida_on_connection_output (void * addr, void * buffer, size_t length, uint8_t tos, uint8_t set_df)
+telco_on_connection_output (void * addr, void * buffer, size_t length, uint8_t tos, uint8_t set_df)
 {
-  FridaSctpConnection * connection = addr;
+  TelcoSctpConnection * connection = addr;
 
-  _frida_sctp_connection_emit_transport_packet (connection, buffer, (gint) length);
+  _telco_sctp_connection_emit_transport_packet (connection, buffer, (gint) length);
 
   return 0;
 }
 
 static void
-frida_on_debug_printf (const char * format, ...)
+telco_on_debug_printf (const char * format, ...)
 {
   g_printerr ("[SCTP] %s\n", format);
 }
 
 void *
-_frida_sctp_connection_create_sctp_socket (FridaSctpConnection * self)
+_telco_sctp_connection_create_sctp_socket (TelcoSctpConnection * self)
 {
   struct socket * sock;
   struct linger linger;
@@ -168,7 +168,7 @@ _frida_sctp_connection_create_sctp_socket (FridaSctpConnection * self)
   usrsctp_register_address (self);
 
   sock = usrsctp_socket (AF_CONN, SOCK_STREAM, IPPROTO_SCTP, NULL, NULL, 0, NULL);
-  usrsctp_set_upcall (sock, frida_on_upcall, self);
+  usrsctp_set_upcall (sock, telco_on_upcall, self);
   usrsctp_set_non_blocking (sock, TRUE);
 
   linger.l_onoff = TRUE;
@@ -197,7 +197,7 @@ _frida_sctp_connection_create_sctp_socket (FridaSctpConnection * self)
 }
 
 void
-_frida_sctp_connection_connect_sctp_socket (FridaSctpConnection * self, void * sock, guint16 port)
+_telco_sctp_connection_connect_sctp_socket (TelcoSctpConnection * self, void * sock, guint16 port)
 {
   struct sockaddr_conn addr;
 
@@ -214,21 +214,21 @@ _frida_sctp_connection_connect_sctp_socket (FridaSctpConnection * self, void * s
 }
 
 static void
-frida_on_upcall (struct socket * sock, void * user_data, int flags)
+telco_on_upcall (struct socket * sock, void * user_data, int flags)
 {
-  FridaSctpConnection * connection = user_data;
+  TelcoSctpConnection * connection = user_data;
 
-  _frida_sctp_connection_on_sctp_socket_events_changed (connection);
+  _telco_sctp_connection_on_sctp_socket_events_changed (connection);
 }
 
 void
-_frida_sctp_connection_close (void * sock)
+_telco_sctp_connection_close (void * sock)
 {
   usrsctp_close (sock);
 }
 
 void
-_frida_sctp_connection_shutdown (void * sock, FridaSctpShutdownType type, GError ** error)
+_telco_sctp_connection_shutdown (void * sock, TelcoSctpShutdownType type, GError ** error)
 {
   if (usrsctp_shutdown (sock, type) == -1)
   {
@@ -237,7 +237,7 @@ _frida_sctp_connection_shutdown (void * sock, FridaSctpShutdownType type, GError
 }
 
 GIOCondition
-_frida_sctp_connection_query_sctp_socket_events (void * sock)
+_telco_sctp_connection_query_sctp_socket_events (void * sock)
 {
   GIOCondition condition = 0;
   int events;
@@ -257,14 +257,14 @@ _frida_sctp_connection_query_sctp_socket_events (void * sock)
 }
 
 void
-_frida_sctp_connection_handle_transport_packet (FridaSctpConnection * self, guint8 * data, gint data_length)
+_telco_sctp_connection_handle_transport_packet (TelcoSctpConnection * self, guint8 * data, gint data_length)
 {
   usrsctp_conninput (self, data, data_length, 0);
 }
 
 gssize
-_frida_sctp_connection_recv (void * sock, guint8 * buffer, gint buffer_length, guint16 * stream_id, FridaPayloadProtocolId * protocol_id,
-    FridaSctpMessageFlags * message_flags, GError ** error)
+_telco_sctp_connection_recv (void * sock, guint8 * buffer, gint buffer_length, guint16 * stream_id, TelcoPayloadProtocolId * protocol_id,
+    TelcoSctpMessageFlags * message_flags, GError ** error)
 {
   gssize n;
   struct sockaddr_conn from;
@@ -291,16 +291,16 @@ _frida_sctp_connection_recv (void * sock, guint8 * buffer, gint buffer_length, g
   else
   {
     *stream_id = 0;
-    *protocol_id = FRIDA_PAYLOAD_PROTOCOL_ID_NONE;
+    *protocol_id = TELCO_PAYLOAD_PROTOCOL_ID_NONE;
   }
 
   *message_flags = 0;
 
   if ((msg_flags & MSG_EOR) != 0)
-    *message_flags |= FRIDA_SCTP_MESSAGE_FLAGS_END_OF_RECORD;
+    *message_flags |= TELCO_SCTP_MESSAGE_FLAGS_END_OF_RECORD;
 
   if ((msg_flags & MSG_NOTIFICATION) != 0)
-    *message_flags |= FRIDA_SCTP_MESSAGE_FLAGS_NOTIFICATION;
+    *message_flags |= TELCO_SCTP_MESSAGE_FLAGS_NOTIFICATION;
 
   return n;
 
@@ -312,7 +312,7 @@ propagate_usrsctp_error:
 }
 
 gssize
-_frida_sctp_connection_send (void * sock, guint16 stream_id, FridaPayloadProtocolId protocol_id, guint8 * data, gint data_length,
+_telco_sctp_connection_send (void * sock, guint16 stream_id, TelcoPayloadProtocolId protocol_id, guint8 * data, gint data_length,
       GError ** error)
 {
   gssize n;
@@ -342,13 +342,13 @@ propagate_usrsctp_error:
 }
 
 gint
-_frida_sctp_timer_source_get_timeout (void)
+_telco_sctp_timer_source_get_timeout (void)
 {
   return usrsctp_get_timeout ();
 }
 
 void
-_frida_sctp_timer_source_process_timers (guint32 elapsed_msec)
+_telco_sctp_timer_source_process_timers (guint32 elapsed_msec)
 {
   usrsctp_handle_timers (elapsed_msec);
 }

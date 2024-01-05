@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class BareboneHostSessionBackend : Object, HostSessionBackend {
 		private BareboneHostSessionProvider? provider;
 
@@ -6,7 +6,7 @@ namespace Frida {
 
 		public async void start (Cancellable? cancellable) throws IOError {
 			SocketConnectable? connectable = null;
-			unowned string? address = Environment.get_variable ("FRIDA_BAREBONE_ADDRESS");
+			unowned string? address = Environment.get_variable ("TELCO_BAREBONE_ADDRESS");
 			if (address != null) {
 				try {
 					connectable = NetworkAddress.parse (address, DEFAULT_PORT);
@@ -17,7 +17,7 @@ namespace Frida {
 				connectable = new InetSocketAddress (new InetAddress.loopback (SocketFamily.IPV4), DEFAULT_PORT);
 
 			uint64 heap_base_pa = 0;
-			unowned string? heap_base_preference = Environment.get_variable ("FRIDA_BAREBONE_HEAP_BASE");
+			unowned string? heap_base_preference = Environment.get_variable ("TELCO_BAREBONE_HEAP_BASE");
 			if (heap_base_preference != null)
 				heap_base_pa = uint64.parse (heap_base_preference, 16);
 
@@ -300,7 +300,7 @@ namespace Frida {
 			set { transmitter.message_sink = value; }
 		}
 
-		public MainContext frida_context {
+		public MainContext telco_context {
 			get;
 			construct;
 		}
@@ -333,17 +333,17 @@ namespace Frida {
 			Object (
 				id: id,
 				persist_timeout: persist_timeout,
-				frida_context: MainContext.ref_thread_default (),
+				telco_context: MainContext.ref_thread_default (),
 				dbus_context: dbus_context,
 				services: services
 			);
 		}
 
 		construct {
-			assert (frida_context != null);
+			assert (telco_context != null);
 			assert (dbus_context != null);
 
-			transmitter = new AgentMessageTransmitter (persist_timeout, frida_context, dbus_context);
+			transmitter = new AgentMessageTransmitter (persist_timeout, telco_context, dbus_context);
 			transmitter.closed.connect (on_transmitter_closed);
 			transmitter.new_candidates.connect (on_transmitter_new_candidates);
 			transmitter.candidate_gathering_done.connect (on_transmitter_candidate_gathering_done);

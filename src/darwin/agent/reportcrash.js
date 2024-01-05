@@ -209,7 +209,7 @@ function applyInstrumentation() {
         const logPath = filePath.toString();
         session.logPath = logPath;
 
-        if (logPath.includes('.forced-by-frida'))
+        if (logPath.includes('.forced-by-telco'))
           session.forcedByUs = true;
 
         session.logChunks.push(NSString.stringWithContentsOfFile_encoding_error_(filePath, NSUTF8StringEncoding, NULL).toString());

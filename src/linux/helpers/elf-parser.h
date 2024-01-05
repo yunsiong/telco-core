@@ -1,5 +1,5 @@
-#ifndef __FRIDA_ELF_PARSER_H__
-#define __FRIDA_ELF_PARSER_H__
+#ifndef __TELCO_ELF_PARSER_H__
+#define __TELCO_ELF_PARSER_H__
 
 #include <elf.h>
 #include <stdbool.h>
@@ -23,24 +23,24 @@
 #endif
 
 #if __ELF_NATIVE_CLASS == 64
-# define FRIDA_ELF_ST_TYPE ELF64_ST_TYPE
-# define FRIDA_ELF_ST_BIND ELF64_ST_BIND
+# define TELCO_ELF_ST_TYPE ELF64_ST_TYPE
+# define TELCO_ELF_ST_BIND ELF64_ST_BIND
 #else
-# define FRIDA_ELF_ST_TYPE ELF32_ST_TYPE
-# define FRIDA_ELF_ST_BIND ELF32_ST_BIND
+# define TELCO_ELF_ST_TYPE ELF32_ST_TYPE
+# define TELCO_ELF_ST_BIND ELF32_ST_BIND
 #endif
 
-#define FRIDA_ELF_PAGE_ALIGN(value, page_size) \
+#define TELCO_ELF_PAGE_ALIGN(value, page_size) \
     ((((ElfW(Addr)) (value)) + ((ElfW(Addr)) ((page_size) - 1))) & ~((ElfW(Addr)) ((page_size) - 1)))
-#define FRIDA_ELF_PAGE_START(value, page_size) \
+#define TELCO_ELF_PAGE_START(value, page_size) \
     ((ElfW(Addr)) (value) & ~((ElfW(Addr)) ((page_size) - 1)))
-#define FRIDA_ELF_PAGE_OFFSET(value, page_size) \
+#define TELCO_ELF_PAGE_OFFSET(value, page_size) \
     ((ElfW(Addr)) (value) & (ElfW(Addr)) (page_size - 1))
 
-typedef struct _FridaElfExportDetails FridaElfExportDetails;
-typedef bool (* FridaFoundElfSymbolFunc) (const FridaElfExportDetails * details, void * user_data);
+typedef struct _TelcoElfExportDetails TelcoElfExportDetails;
+typedef bool (* TelcoFoundElfSymbolFunc) (const TelcoElfExportDetails * details, void * user_data);
 
-struct _FridaElfExportDetails
+struct _TelcoElfExportDetails
 {
   const char * name;
   void * address;
@@ -48,9 +48,9 @@ struct _FridaElfExportDetails
   uint8_t bind;
 };
 
-const char * frida_elf_query_soname (const ElfW(Ehdr) * ehdr);
-void frida_elf_enumerate_exports (const ElfW(Ehdr) * ehdr, FridaFoundElfSymbolFunc func, void * user_data);
-void frida_elf_enumerate_symbols (const ElfW(Ehdr) * ehdr, void * loaded_base, FridaFoundElfSymbolFunc func, void * user_data);
-ElfW(Addr) frida_elf_compute_base_from_phdrs (const ElfW(Phdr) * phdrs, ElfW(Half) phdr_size, ElfW(Half) phdr_count, size_t page_size);
+const char * telco_elf_query_soname (const ElfW(Ehdr) * ehdr);
+void telco_elf_enumerate_exports (const ElfW(Ehdr) * ehdr, TelcoFoundElfSymbolFunc func, void * user_data);
+void telco_elf_enumerate_symbols (const ElfW(Ehdr) * ehdr, void * loaded_base, TelcoFoundElfSymbolFunc func, void * user_data);
+ElfW(Addr) telco_elf_compute_base_from_phdrs (const ElfW(Phdr) * phdrs, ElfW(Half) phdr_size, ElfW(Half) phdr_count, size_t page_size);
 
 #endif

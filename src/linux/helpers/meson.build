@@ -1,4 +1,4 @@
-project('frida-linux-helpers', 'c',
+project('telco-linux-helpers', 'c',
   default_options: [
     'c_std=gnu99',
     'optimization=s',
@@ -53,7 +53,7 @@ extra_link_args = [
   '-Wl,-T,' + helper_lds,
 ]
 if host_machine.cpu_family() == 'arm'
-  extra_link_args += run_command('../../../../build/frida-android-arm-clang', '-print-libgcc-file-name', check: false).stdout().strip()
+  extra_link_args += run_command('../../../../build/telco-android-arm-clang', '-print-libgcc-file-name', check: false).stdout().strip()
 endif
 
 bootstrapper_sources = [
@@ -76,7 +76,7 @@ custom_target('bootstrapper-bin',
   input: [bootstrapper],
   output: ['bootstrapper.bin'],
   command: [objcopy, common_objcopy_flags, '@INPUT0@', '@OUTPUT0@'],
-  install_dir: 'share' / 'frida-helpers',
+  install_dir: 'share' / 'telco-helpers',
   install: true,
 )
 test('bootstrapper', executable('test-bootstrapper', bootstrapper_sources,
@@ -95,6 +95,6 @@ custom_target('loader-bin',
   input: [loader],
   output: ['loader.bin'],
   command: [objcopy, common_objcopy_flags, '@INPUT0@', '@OUTPUT0@'],
-  install_dir: 'share' / 'frida-helpers',
+  install_dir: 'share' / 'telco-helpers',
   install: true,
 )

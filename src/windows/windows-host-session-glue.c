@@ -1,6 +1,6 @@
 #define COBJMACROS 1
 
-#include "frida-core.h"
+#include "telco-core.h"
 
 #include "icon-helpers.h"
 
@@ -15,18 +15,18 @@
 
 #define PARSE_STRING_MAX_LENGTH   (40 + 1)
 
-static void frida_child_process_on_death (GPid pid, gint status, gpointer user_data);
+static void telco_child_process_on_death (GPid pid, gint status, gpointer user_data);
 
-static WCHAR * frida_argv_to_command_line (gchar ** argv, gint argv_length);
-static WCHAR * frida_envp_to_environment_block (gchar ** envp, gint envp_length);
+static WCHAR * telco_argv_to_command_line (gchar ** argv, gint argv_length);
+static WCHAR * telco_envp_to_environment_block (gchar ** envp, gint envp_length);
 
-static void frida_append_n_backslashes (GString * str, guint n);
+static void telco_append_n_backslashes (GString * str, guint n);
 
-static void frida_make_pipe (HANDLE * read, HANDLE * write);
-static void frida_ensure_not_inherited (HANDLE handle);
+static void telco_make_pipe (HANDLE * read, HANDLE * write);
+static void telco_ensure_not_inherited (HANDLE handle);
 
 GVariant *
-_frida_windows_host_session_provider_try_extract_icon (void)
+_telco_windows_host_session_provider_try_extract_icon (void)
 {
   GVariant * result = NULL;
   OLECHAR my_computer_parse_string[PARSE_STRING_MAX_LENGTH];
@@ -59,7 +59,7 @@ _frida_windows_host_session_provider_try_extract_icon (void)
     if (SHGetFileInfoW ((LPCWSTR) child, 0, &file_info, sizeof (file_info), SHGFI_PIDL | SHGFI_ICON | SHGFI_SMALLICON | SHGFI_ADDOVERLAYS) == 0)
       goto next_child;
 
-    result = _frida_icon_from_native_icon_handle (file_info.hIcon, FRIDA_ICON_SMALL);
+    result = _telco_icon_from_native_icon_handle (file_info.hIcon, TELCO_ICON_SMALL);
 
     DestroyIcon (file_info.hIcon);
 
@@ -76,24 +76,24 @@ beach:
   return result;
 }
 
-FridaChildProcess *
-_frida_windows_host_session_spawn (FridaWindowsHostSession * self, const gchar * path, FridaHostSpawnOptions * options, GError ** error)
+TelcoChildProcess *
+_telco_windows_host_session_spawn (TelcoWindowsHostSession * self, const gchar * path, TelcoHostSpawnOptions * options, GError ** error)
 {
-  FridaChildProcess * process = NULL;
+  TelcoChildProcess * process = NULL;
   WCHAR * application_name, * command_line, * environment, * current_directory;
   STARTUPINFOW startup_info;
   HANDLE stdin_read = NULL, stdin_write = NULL;
   HANDLE stdout_read = NULL, stdout_write = NULL;
   HANDLE stderr_read = NULL, stderr_write = NULL;
   PROCESS_INFORMATION process_info;
-  FridaStdioPipes * pipes;
+  TelcoStdioPipes * pipes;
   guint watch_id;
   GSource * watch;
 
   application_name = (WCHAR *) g_utf8_to_utf16 (path, -1, NULL, NULL, NULL);
 
   if (options->has_argv)
-    command_line = frida_argv_to_command_line (options->argv, options->argv_length1);
+    command_line = telco_argv_to_command_line (options->argv, options->argv_length1);
   else
     command_line = NULL;
 
@@ -102,8 +102,8 @@ _frida_windows_host_session_spawn (FridaWindowsHostSession * self, const gchar *
     gchar ** envp;
     gint envp_length;
 
-    envp = frida_host_spawn_options_compute_envp (options, &envp_length);
-    environment = frida_envp_to_environment_block (envp, envp_length);
+    envp = telco_host_spawn_options_compute_envp (options, &envp_length);
+    environment = telco_envp_to_environment_block (envp, envp_length);
     g_strfreev (envp);
   }
   else
@@ -121,7 +121,7 @@ _frida_windows_host_session_spawn (FridaWindowsHostSession * self, const gchar *
 
   switch (options->stdio)
   {
-    case FRIDA_STDIO_INHERIT:
+    case TELCO_STDIO_INHERIT:
       startup_info.hStdInput = GetStdHandle (STD_INPUT_HANDLE);
       startup_info.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
       startup_info.hStdError = GetStdHandle (STD_ERROR_HANDLE);
@@ -129,14 +129,14 @@ _frida_windows_host_session_spawn (FridaWindowsHostSession * self, const gchar *
 
       break;
 
-    case FRIDA_STDIO_PIPE:
-      frida_make_pipe (&stdin_read, &stdin_write);
-      frida_make_pipe (&stdout_read, &stdout_write);
-      frida_make_pipe (&stderr_read, &stderr_write);
+    case TELCO_STDIO_PIPE:
+      telco_make_pipe (&stdin_read, &stdin_write);
+      telco_make_pipe (&stdout_read, &stdout_write);
+      telco_make_pipe (&stderr_read, &stderr_write);
 
-      frida_ensure_not_inherited (stdin_write);
-      frida_ensure_not_inherited (stdout_read);
-      frida_ensure_not_inherited (stderr_read);
+      telco_ensure_not_inherited (stdin_write);
+      telco_ensure_not_inherited (stdout_read);
+      telco_ensure_not_inherited (stderr_read);
 
       startup_info.hStdInput = stdin_read;
       startup_info.hStdOutput = stdout_write;
@@ -170,13 +170,13 @@ _frida_windows_host_session_spawn (FridaWindowsHostSession * self, const gchar *
 
   DebugActiveProcessStop (process_info.dwProcessId);
 
-  if (options->stdio == FRIDA_STDIO_PIPE)
+  if (options->stdio == TELCO_STDIO_PIPE)
   {
     CloseHandle (stdin_read);
     CloseHandle (stdout_write);
     CloseHandle (stderr_write);
 
-    pipes = frida_stdio_pipes_new (
+    pipes = telco_stdio_pipes_new (
         g_win32_output_stream_new (stdin_write, TRUE),
         g_win32_input_stream_new (stdout_read, TRUE),
         g_win32_input_stream_new (stderr_read, TRUE));
@@ -186,7 +186,7 @@ _frida_windows_host_session_spawn (FridaWindowsHostSession * self, const gchar *
     pipes = NULL;
   }
 
-  process = frida_child_process_new (
+  process = telco_child_process_new (
       G_OBJECT (self),
       process_info.dwProcessId,
       process_info.hProcess,
@@ -196,12 +196,12 @@ _frida_windows_host_session_spawn (FridaWindowsHostSession * self, const gchar *
   watch_id = g_child_watch_add_full (
       G_PRIORITY_DEFAULT,
       process_info.hProcess,
-      frida_child_process_on_death,
+      telco_child_process_on_death,
       g_object_ref (process),
       g_object_unref);
   watch = g_main_context_find_source_by_id (g_main_context_get_thread_default (), watch_id);
   g_assert (watch != NULL);
-  frida_child_process_set_watch (process, watch);
+  telco_child_process_set_watch (process, watch);
 
   goto beach;
 
@@ -213,21 +213,21 @@ create_process_failed:
     if (last_error == ERROR_BAD_EXE_FORMAT)
     {
       g_set_error (error,
-          FRIDA_ERROR,
-          FRIDA_ERROR_EXECUTABLE_NOT_SUPPORTED,
+          TELCO_ERROR,
+          TELCO_ERROR_EXECUTABLE_NOT_SUPPORTED,
           "Unable to spawn executable at '%s': unsupported file format",
           path);
     }
     else
     {
       g_set_error (error,
-          FRIDA_ERROR,
-          FRIDA_ERROR_NOT_SUPPORTED,
+          TELCO_ERROR,
+          TELCO_ERROR_NOT_SUPPORTED,
           "Unable to spawn executable at '%s': 0x%08lx",
           path, last_error);
     }
 
-    if (options->stdio == FRIDA_STDIO_PIPE)
+    if (options->stdio == TELCO_STDIO_PIPE)
     {
       CloseHandle (stdin_read);
       CloseHandle (stdin_write);
@@ -253,7 +253,7 @@ beach:
 }
 
 gboolean
-_frida_windows_host_session_process_is_alive (guint pid)
+_telco_windows_host_session_process_is_alive (guint pid)
 {
   HANDLE process;
   DWORD res;
@@ -270,30 +270,30 @@ _frida_windows_host_session_process_is_alive (guint pid)
 }
 
 void
-frida_child_process_close (FridaChildProcess * self)
+telco_child_process_close (TelcoChildProcess * self)
 {
   GSource * watch;
 
   if (self->closed)
     return;
 
-  watch = frida_child_process_get_watch (self);
+  watch = telco_child_process_get_watch (self);
   if (watch != NULL)
     g_source_destroy (watch);
 
-  CloseHandle (frida_child_process_get_handle (self));
-  CloseHandle (frida_child_process_get_main_thread (self));
+  CloseHandle (telco_child_process_get_handle (self));
+  CloseHandle (telco_child_process_get_main_thread (self));
 
   self->closed = TRUE;
 }
 
 void
-frida_child_process_resume (FridaChildProcess * self, GError ** error)
+telco_child_process_resume (TelcoChildProcess * self, GError ** error)
 {
   if (self->resumed)
     goto already_resumed;
 
-  ResumeThread (frida_child_process_get_main_thread (self));
+  ResumeThread (telco_child_process_get_main_thread (self));
 
   self->resumed = TRUE;
   return;
@@ -301,27 +301,27 @@ frida_child_process_resume (FridaChildProcess * self, GError ** error)
 already_resumed:
   {
     g_set_error (error,
-        FRIDA_ERROR,
-        FRIDA_ERROR_INVALID_OPERATION,
+        TELCO_ERROR,
+        TELCO_ERROR_INVALID_OPERATION,
         "Already resumed");
   }
 }
 
 static void
-frida_child_process_on_death (GPid pid, gint status, gpointer user_data)
+telco_child_process_on_death (GPid pid, gint status, gpointer user_data)
 {
-  FridaChildProcess * self = user_data;
+  TelcoChildProcess * self = user_data;
 
   (void) pid;
 
-  _frida_windows_host_session_on_child_dead (
-      FRIDA_WINDOWS_HOST_SESSION (frida_child_process_get_parent (self)),
+  _telco_windows_host_session_on_child_dead (
+      TELCO_WINDOWS_HOST_SESSION (telco_child_process_get_parent (self)),
       self,
       status);
 }
 
 static WCHAR *
-frida_argv_to_command_line (gchar ** argv, gint argv_length)
+telco_argv_to_command_line (gchar ** argv, gint argv_length)
 {
   GString * line;
   WCHAR * line_utf16;
@@ -365,17 +365,17 @@ frida_argv_to_command_line (gchar ** argv, gint argv_length)
 
         if (*c == '\0')
         {
-          frida_append_n_backslashes (line, num_backslashes * 2);
+          telco_append_n_backslashes (line, num_backslashes * 2);
           break;
         }
         else if (*c == '"')
         {
-          frida_append_n_backslashes (line, (num_backslashes * 2) + 1);
+          telco_append_n_backslashes (line, (num_backslashes * 2) + 1);
           g_string_append_c (line, *c);
         }
         else
         {
-          frida_append_n_backslashes (line, num_backslashes);
+          telco_append_n_backslashes (line, num_backslashes);
           g_string_append_unichar (line, g_utf8_get_char (c));
         }
       }
@@ -392,7 +392,7 @@ frida_argv_to_command_line (gchar ** argv, gint argv_length)
 }
 
 static WCHAR *
-frida_envp_to_environment_block (gchar ** envp, gint envp_length)
+telco_envp_to_environment_block (gchar ** envp, gint envp_length)
 {
   GString * block;
 
@@ -425,7 +425,7 @@ frida_envp_to_environment_block (gchar ** envp, gint envp_length)
 }
 
 static void
-frida_append_n_backslashes (GString * str, guint n)
+telco_append_n_backslashes (GString * str, guint n)
 {
   guint i;
 
@@ -434,7 +434,7 @@ frida_append_n_backslashes (GString * str, guint n)
 }
 
 static void
-frida_make_pipe (HANDLE * read, HANDLE * write)
+telco_make_pipe (HANDLE * read, HANDLE * write)
 {
   SECURITY_ATTRIBUTES attributes;
   DWORD default_buffer_size = 0;
@@ -449,7 +449,7 @@ frida_make_pipe (HANDLE * read, HANDLE * write)
 }
 
 static void
-frida_ensure_not_inherited (HANDLE handle)
+telco_ensure_not_inherited (HANDLE handle)
 {
   G_GNUC_UNUSED BOOL inherit_flag_updated;
 

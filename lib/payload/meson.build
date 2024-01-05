@@ -25,17 +25,17 @@ if host_os_family != 'windows'
   extra_vala_args += ['--pkg=posix']
 endif
 if host_os_family == 'darwin'
-  extra_vala_args += ['--pkg=frida-gum-darwin-1.0']
+  extra_vala_args += ['--pkg=telco-gum-darwin-1.0']
 endif
 if host_os_family == 'linux'
   extra_vala_args += ['--pkg=linux']
 endif
 
-payload = static_library('frida-payload-' + api_version, payload_sources,
-  c_args: frida_component_cflags,
+payload = static_library('telco-payload-' + api_version, payload_sources,
+  c_args: telco_component_cflags,
   vala_args: extra_vala_args,
-  vala_header: 'frida-payload.h',
-  vala_vapi: f'frida-payload-@api_version@.vapi',
+  vala_header: 'telco-payload.h',
+  vala_vapi: f'telco-payload-@api_version@.vapi',
   dependencies: [gio_dep, gee_dep, json_glib_dep, gum_dep, gumjs_dep, base_dep],
   install: true,
   install_dir: [true, header_install_dir, true],
@@ -48,5 +48,5 @@ payload_dep = declare_dependency(
 
 pkg = import('pkgconfig')
 pkg.generate(payload,
-  description: 'Frida payload library intended for static linking into payloads',
+  description: 'Telco payload library intended for static linking into payloads',
 )

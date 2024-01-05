@@ -27,10 +27,10 @@
  * SUCH DAMAGE.
  */
 
-#define frida_asm_align 16
-#define frida_asm_custom_entry(f)
-#define frida_asm_custom_end(f)
-#define frida_asm_function_type @function
+#define telco_asm_align 16
+#define telco_asm_custom_entry(f)
+#define telco_asm_custom_end(f)
+#define telco_asm_function_type @function
 
 #include "syscall-linux.h"
 
@@ -62,7 +62,7 @@ ENTRY_PRIVATE(syscall)
   .cfi_rel_offset ebp, 0
 
   # Get and save the system call entry address.
-  lea frida_kernel_syscall@GOTOFF(%ebx), %eax
+  lea telco_kernel_syscall@GOTOFF(%ebx), %eax
   push    %eax
   .cfi_adjust_cfa_offset 4
   .cfi_rel_offset eax, 0
@@ -82,12 +82,12 @@ ENTRY_PRIVATE(syscall)
   addl    $4, %esp
 
   # Error?
-  cmpl    $-FRIDA_MAX_ERRNO, %eax
+  cmpl    $-TELCO_MAX_ERRNO, %eax
   jb      1f
   # Yes, so set errno.
   negl    %eax
   pushl   %eax
-  call    _frida_set_errno
+  call    _telco_set_errno
   addl    $4, %esp
 1:
   # Restore the callee save registers.
@@ -106,7 +106,7 @@ ENTRY_PRIVATE(syscall)
   ret
 END(syscall)
 
-ENTRY_PRIVATE(frida_kernel_syscall)
+ENTRY_PRIVATE(telco_kernel_syscall)
   int $0x80
   ret
-END(frida_kernel_syscall)
+END(telco_kernel_syscall)

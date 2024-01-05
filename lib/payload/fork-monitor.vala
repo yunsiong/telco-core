@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 #if WINDOWS
 	public class ForkMonitor : Object {
 		public weak ForkHandler handler {

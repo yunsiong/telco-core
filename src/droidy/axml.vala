@@ -1,5 +1,5 @@
-[CCode (gir_namespace = "FridaAXML", gir_version = "1.0")]
-namespace Frida.AXML {
+[CCode (gir_namespace = "TelcoAXML", gir_version = "1.0")]
+namespace Telco.AXML {
 	public static ElementTree read (InputStream stream) throws Error {
 		try {
 			var input = new DataInputStream (stream);

@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 #if DARWIN
 	public class ThreadSuspendMonitor : Object {
 		public weak ProcessInvader invader {
@@ -49,7 +49,7 @@ namespace Frida {
 			unowned Gum.InvocationContext context = Gum.Interceptor.get_current_invocation ();
 			unowned ThreadSuspendMonitor monitor = (ThreadSuspendMonitor) context.get_replacement_data ();
 
-			if (monitor.is_called_by_frida (context))
+			if (monitor.is_called_by_telco (context))
 				return monitor.task_threads (task_id, threads, count);
 
 			return monitor.handle_task_threads (task_id, threads, count);
@@ -69,7 +69,7 @@ namespace Frida {
 			unowned Gum.InvocationContext context = Gum.Interceptor.get_current_invocation ();
 			unowned ThreadSuspendMonitor monitor = (ThreadSuspendMonitor) context.get_replacement_data ();
 
-			if (monitor.is_called_by_frida (context))
+			if (monitor.is_called_by_telco (context))
 				return monitor.thread_suspend (thread_id);
 
 			return monitor.handle_thread_suspend (thread_id);
@@ -105,7 +105,7 @@ namespace Frida {
 			unowned Gum.InvocationContext context = Gum.Interceptor.get_current_invocation ();
 			unowned ThreadSuspendMonitor monitor = (ThreadSuspendMonitor) context.get_replacement_data ();
 
-			if (monitor.is_called_by_frida (context))
+			if (monitor.is_called_by_telco (context))
 				return monitor.thread_resume (thread_id);
 
 			return monitor.handle_thread_resume (thread_id);
@@ -118,7 +118,7 @@ namespace Frida {
 			return thread_resume (thread_id);
 		}
 
-		private bool is_called_by_frida (Gum.InvocationContext context) {
+		private bool is_called_by_telco (Gum.InvocationContext context) {
 			Gum.MemoryRange range = invader.get_memory_range ();
 			var caller = Gum.Address.from_pointer (context.get_return_address ());
 			return caller >= range.base_address && caller < range.base_address + range.size;

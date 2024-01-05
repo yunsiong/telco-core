@@ -10,7 +10,7 @@
 #endif
 
 GVariant *
-_frida_icon_from_file (const gchar * filename, guint target_width, guint target_height)
+_telco_icon_from_file (const gchar * filename, guint target_width, guint target_height)
 {
 #ifdef HAVE_MACOS
   GVariant * result = NULL;
@@ -22,7 +22,7 @@ _frida_icon_from_file (const gchar * filename, guint target_width, guint target_
   image = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:filename]];
   if (image != nil)
   {
-    result = _frida_icon_from_native_image_scaled_to (image, target_width, target_height);
+    result = _telco_icon_from_native_image_scaled_to (image, target_width, target_height);
     [image release];
   }
 
@@ -35,7 +35,7 @@ _frida_icon_from_file (const gchar * filename, guint target_width, guint target_
 }
 
 GVariant *
-_frida_icon_from_native_image_scaled_to (FridaNativeImage native_image, guint target_width, guint target_height)
+_telco_icon_from_native_image_scaled_to (TelcoNativeImage native_image, guint target_width, guint target_height)
 {
   GVariant * result;
 #ifdef HAVE_MACOS
@@ -119,7 +119,7 @@ _frida_icon_from_native_image_scaled_to (FridaNativeImage native_image, guint ta
    * HACK ALERT:
    *
    * CoreGraphics does not yet support non-premultiplied, so we make sure it multiplies with the same pixels as
-   * those usually rendered onto by the Frida GUI... ICK!
+   * those usually rendered onto by the Telco GUI... ICK!
    */
   pixels = (guint32 *) pixel_buf;
   for (i = 0; i != target_width * target_height; i++)

@@ -1,4 +1,4 @@
-internal abstract class Frida.AsyncTask<T> : Object {
+internal abstract class Telco.AsyncTask<T> : Object {
 	private MainLoop loop;
 	private bool completed;
 	private Mutex mutex;
@@ -59,7 +59,7 @@ internal abstract class Frida.AsyncTask<T> : Object {
 
 	protected abstract async T perform_operation () throws Error, IOError;
 
-	// FIXME: Work around Vala compiler bug where it fails to include frida-core.h
-	[CCode (cname = "frida_get_main_context")]
+	// FIXME: Work around Vala compiler bug where it fails to include telco-core.h
+	[CCode (cname = "telco_get_main_context")]
 	private extern static unowned MainContext get_main_context ();
 }

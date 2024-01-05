@@ -1,5 +1,5 @@
-[CCode (gir_namespace = "FridaFruity", gir_version = "1.0")]
-namespace Frida.Fruity {
+[CCode (gir_namespace = "TelcoFruity", gir_version = "1.0")]
+namespace Telco.Fruity {
 	public class UsbmuxClient : Object, AsyncInitable {
 		public signal void device_attached (DeviceDetails details);
 		public signal void device_detached (DeviceId id);

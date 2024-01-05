@@ -1,22 +1,22 @@
-namespace Frida.InjectorTest {
+namespace Telco.InjectorTest {
 	public static void add_tests () {
 		GLib.Test.add_func ("/Injector/inject-dynamic-current-arch", () => {
-			test_dynamic_injection (Frida.Test.Arch.CURRENT);
+			test_dynamic_injection (Telco.Test.Arch.CURRENT);
 		});
 
 		if (can_test_cross_arch_injection) {
 			GLib.Test.add_func ("/Injector/inject-dynamic-other-arch", () => {
-				test_dynamic_injection (Frida.Test.Arch.OTHER);
+				test_dynamic_injection (Telco.Test.Arch.OTHER);
 			});
 		}
 
 		GLib.Test.add_func ("/Injector/inject-resident-current-arch", () => {
-			test_resident_injection (Frida.Test.Arch.CURRENT);
+			test_resident_injection (Telco.Test.Arch.CURRENT);
 		});
 
 		if (can_test_cross_arch_injection) {
 			GLib.Test.add_func ("/Injector/inject-resident-other-arch", () => {
-				test_resident_injection (Frida.Test.Arch.OTHER);
+				test_resident_injection (Telco.Test.Arch.OTHER);
 			});
 		}
 
@@ -24,25 +24,25 @@ namespace Frida.InjectorTest {
 
 #if DARWIN
 		GLib.Test.add_func ("/Injector/suspended-injection-current-arch", () => {
-			test_suspended_injection (Frida.Test.Arch.CURRENT);
+			test_suspended_injection (Telco.Test.Arch.CURRENT);
 		});
 
 		if (can_test_cross_arch_injection) {
 			GLib.Test.add_func ("/Injector/suspended-injection-other-arch", () => {
-				test_suspended_injection (Frida.Test.Arch.OTHER);
+				test_suspended_injection (Telco.Test.Arch.OTHER);
 			});
 		}
 #endif
 	}
 
-	private static void test_dynamic_injection (Frida.Test.Arch arch) {
-		var logfile = File.new_for_path (Frida.Test.path_to_temporary_file ("test-dynamic-injection.log"));
+	private static void test_dynamic_injection (Telco.Test.Arch arch) {
+		var logfile = File.new_for_path (Telco.Test.path_to_temporary_file ("test-dynamic-injection.log"));
 		try {
 			logfile.delete ();
 		} catch (GLib.Error delete_error) {
 		}
 		var envp = new string[] {
-			"FRIDA_LABRAT_LOGFILE=" + logfile.get_path ()
+			"TELCO_LABRAT_LOGFILE=" + logfile.get_path ()
 		};
 
 		var rat = new Labrat ("sleeper", envp, arch);
@@ -55,15 +55,15 @@ namespace Frida.InjectorTest {
 		rat.inject ("simple-agent", requested_exit_code.to_string (), arch);
 		rat.wait_for_uninject ();
 
-		switch (Frida.Test.os ()) {
-			case Frida.Test.OS.MACOS:   // Gum.Darwin.Mapper
-			case Frida.Test.OS.IOS:     // Gum.Darwin.Mapper
-			case Frida.Test.OS.TVOS:    // Gum.Darwin.Mapper
-			case Frida.Test.OS.ANDROID: // Bionic's behavior
+		switch (Telco.Test.os ()) {
+			case Telco.Test.OS.MACOS:   // Gum.Darwin.Mapper
+			case Telco.Test.OS.IOS:     // Gum.Darwin.Mapper
+			case Telco.Test.OS.TVOS:    // Gum.Darwin.Mapper
+			case Telco.Test.OS.ANDROID: // Bionic's behavior
 				assert_true (content_of (logfile) == ">m<>m");
 				break;
-			case Frida.Test.OS.LINUX:
-				if (Frida.Test.libc () == Frida.Test.Libc.UCLIBC) {
+			case Telco.Test.OS.LINUX:
+				if (Telco.Test.libc () == Telco.Test.Libc.UCLIBC) {
 					assert_true (content_of (logfile) == ">m<>m");
 				} else {
 					assert_true (content_of (logfile) == ">m<>m<");
@@ -86,14 +86,14 @@ namespace Frida.InjectorTest {
 		rat.close ();
 	}
 
-	private static void test_resident_injection (Frida.Test.Arch arch) {
-		var logfile = File.new_for_path (Frida.Test.path_to_temporary_file ("test-resident-injection.log"));
+	private static void test_resident_injection (Telco.Test.Arch arch) {
+		var logfile = File.new_for_path (Telco.Test.path_to_temporary_file ("test-resident-injection.log"));
 		try {
 			logfile.delete ();
 		} catch (GLib.Error delete_error) {
 		}
 		var envp = new string[] {
-			"FRIDA_LABRAT_LOGFILE=" + logfile.get_path ()
+			"TELCO_LABRAT_LOGFILE=" + logfile.get_path ()
 		};
 
 		var rat = new Labrat ("sleeper", envp, arch);
@@ -114,9 +114,9 @@ namespace Frida.InjectorTest {
 	}
 
 	private static void test_resource_leaks () {
-		var logfile = File.new_for_path (Frida.Test.path_to_temporary_file ("test-leaks.log"));
+		var logfile = File.new_for_path (Telco.Test.path_to_temporary_file ("test-leaks.log"));
 		var envp = new string[] {
-			"FRIDA_LABRAT_LOGFILE=" + logfile.get_path ()
+			"TELCO_LABRAT_LOGFILE=" + logfile.get_path ()
 		};
 
 		var rat = new Labrat ("sleeper", envp);
@@ -146,14 +146,14 @@ namespace Frida.InjectorTest {
 	}
 
 #if DARWIN
-	private static void test_suspended_injection (Frida.Test.Arch arch) {
-		var logfile = File.new_for_path (Frida.Test.path_to_temporary_file ("test-suspended-injection.log"));
+	private static void test_suspended_injection (Telco.Test.Arch arch) {
+		var logfile = File.new_for_path (Telco.Test.path_to_temporary_file ("test-suspended-injection.log"));
 		try {
 			logfile.delete ();
 		} catch (GLib.Error delete_error) {
 		}
 		var envp = new string[] {
-			"FRIDA_LABRAT_LOGFILE=" + logfile.get_path ()
+			"TELCO_LABRAT_LOGFILE=" + logfile.get_path ()
 		};
 
 		var rat = new Labrat.suspended ("sleeper", envp, arch);
@@ -179,7 +179,7 @@ namespace Frida.InjectorTest {
 	}
 
 	private class Labrat {
-		public Frida.Test.Process? process {
+		public Telco.Test.Process? process {
 			get;
 			private set;
 		}
@@ -188,9 +188,9 @@ namespace Frida.InjectorTest {
 		private Gee.Queue<uint> uninjections = new Gee.ArrayQueue<uint> ();
 		private PendingUninject? pending_uninject;
 
-		public Labrat (string name, string[] envp, Frida.Test.Arch arch = Frida.Test.Arch.CURRENT) {
+		public Labrat (string name, string[] envp, Telco.Test.Arch arch = Telco.Test.Arch.CURRENT) {
 			try {
-				process = Frida.Test.Process.start (Frida.Test.Labrats.path_to_executable (name), null, envp, arch);
+				process = Telco.Test.Process.start (Telco.Test.Labrats.path_to_executable (name), null, envp, arch);
 			} catch (Error e) {
 				printerr ("\nFAIL: %s\n\n", e.message);
 				assert_not_reached ();
@@ -202,9 +202,9 @@ namespace Frida.InjectorTest {
 #endif
 		}
 
-		public Labrat.suspended (string name, string[] envp, Frida.Test.Arch arch = Frida.Test.Arch.CURRENT) {
+		public Labrat.suspended (string name, string[] envp, Telco.Test.Arch arch = Telco.Test.Arch.CURRENT) {
 			try {
-				process = Frida.Test.Process.create (Frida.Test.Labrats.path_to_executable (name), null, envp, arch);
+				process = Telco.Test.Process.create (Telco.Test.Labrats.path_to_executable (name), null, envp, arch);
 			} catch (Error e) {
 				printerr ("\nFAIL: %s\n\n", e.message);
 				assert_not_reached ();
@@ -239,7 +239,7 @@ namespace Frida.InjectorTest {
 			});
 		}
 
-		public void inject (string name, string data, Frida.Test.Arch arch = Frida.Test.Arch.CURRENT) {
+		public void inject (string name, string data, Telco.Test.Arch arch = Telco.Test.Arch.CURRENT) {
 			var loop = new MainLoop ();
 			Idle.add (() => {
 				perform_injection.begin (name, data, arch, loop);
@@ -248,17 +248,17 @@ namespace Frida.InjectorTest {
 			loop.run ();
 		}
 
-		private async void perform_injection (string name, string data, Frida.Test.Arch arch, MainLoop loop) {
+		private async void perform_injection (string name, string data, Telco.Test.Arch arch, MainLoop loop) {
 			if (injector == null) {
 				injector = Injector.new ();
 				injector.uninjected.connect (on_uninjected);
 			}
 
 			try {
-				var path = Frida.Test.Labrats.path_to_library (name, arch);
+				var path = Telco.Test.Labrats.path_to_library (name, arch);
 				assert_true (FileUtils.test (path, FileTest.EXISTS));
 
-				yield injector.inject_library_file (process.id, path, "frida_agent_main", data);
+				yield injector.inject_library_file (process.id, path, "telco_agent_main", data);
 			} catch (GLib.Error e) {
 				printerr ("\nFAIL: %s\n\n", e.message);
 				assert_not_reached ();

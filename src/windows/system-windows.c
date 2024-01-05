@@ -1,4 +1,4 @@
-#include "frida-core.h"
+#include "telco-core.h"
 
 #include "icon-helpers.h"
 
@@ -7,61 +7,61 @@
 
 #define DRIVE_STRINGS_MAX_LENGTH     (512)
 
-typedef struct _FridaEnumerateProcessesOperation FridaEnumerateProcessesOperation;
+typedef struct _TelcoEnumerateProcessesOperation TelcoEnumerateProcessesOperation;
 
-struct _FridaEnumerateProcessesOperation
+struct _TelcoEnumerateProcessesOperation
 {
-  FridaScope scope;
+  TelcoScope scope;
   GHashTable * ppid_by_pid;
   guint frontmost_pid;
 
   GArray * result;
 };
 
-static void frida_collect_process_info (guint pid, FridaEnumerateProcessesOperation * op);
-static gboolean frida_add_process_metadata (GHashTable * parameters, guint pid, HANDLE process, FridaEnumerateProcessesOperation * op);
+static void telco_collect_process_info (guint pid, TelcoEnumerateProcessesOperation * op);
+static gboolean telco_add_process_metadata (GHashTable * parameters, guint pid, HANDLE process, TelcoEnumerateProcessesOperation * op);
 
-static gboolean frida_get_process_filename (HANDLE process, WCHAR * name, DWORD name_capacity);
-static GVariant * frida_get_process_user (HANDLE process);
-static GVariant * frida_get_process_start_time (HANDLE process);
+static gboolean telco_get_process_filename (HANDLE process, WCHAR * name, DWORD name_capacity);
+static GVariant * telco_get_process_user (HANDLE process);
+static GVariant * telco_get_process_start_time (HANDLE process);
 
-static GHashTable * frida_build_ppid_table (void);
-static guint frida_get_frontmost_pid (void);
+static GHashTable * telco_build_ppid_table (void);
+static guint telco_get_frontmost_pid (void);
 
-static GDateTime * frida_parse_filetime (const FILETIME * ft);
-static gint64 frida_filetime_to_unix (const FILETIME * ft);
+static GDateTime * telco_parse_filetime (const FILETIME * ft);
+static gint64 telco_filetime_to_unix (const FILETIME * ft);
 
 void
-frida_system_get_frontmost_application (FridaFrontmostQueryOptions * options, FridaHostApplicationInfo * result, GError ** error)
+telco_system_get_frontmost_application (TelcoFrontmostQueryOptions * options, TelcoHostApplicationInfo * result, GError ** error)
 {
   g_set_error (error,
-      FRIDA_ERROR,
-      FRIDA_ERROR_NOT_SUPPORTED,
+      TELCO_ERROR,
+      TELCO_ERROR_NOT_SUPPORTED,
       "Not implemented");
 }
 
-FridaHostApplicationInfo *
-frida_system_enumerate_applications (FridaApplicationQueryOptions * options, int * result_length)
+TelcoHostApplicationInfo *
+telco_system_enumerate_applications (TelcoApplicationQueryOptions * options, int * result_length)
 {
   *result_length = 0;
 
   return NULL;
 }
 
-FridaHostProcessInfo *
-frida_system_enumerate_processes (FridaProcessQueryOptions * options, int * result_length)
+TelcoHostProcessInfo *
+telco_system_enumerate_processes (TelcoProcessQueryOptions * options, int * result_length)
 {
-  FridaEnumerateProcessesOperation op;
+  TelcoEnumerateProcessesOperation op;
 
-  op.scope = frida_process_query_options_get_scope (options);
+  op.scope = telco_process_query_options_get_scope (options);
   op.ppid_by_pid = NULL;
-  op.frontmost_pid = (op.scope != FRIDA_SCOPE_MINIMAL) ? frida_get_frontmost_pid () : 0;
+  op.frontmost_pid = (op.scope != TELCO_SCOPE_MINIMAL) ? telco_get_frontmost_pid () : 0;
 
-  op.result = g_array_new (FALSE, FALSE, sizeof (FridaHostProcessInfo));
+  op.result = g_array_new (FALSE, FALSE, sizeof (TelcoHostProcessInfo));
 
-  if (frida_process_query_options_has_selected_pids (options))
+  if (telco_process_query_options_has_selected_pids (options))
   {
-    frida_process_query_options_enumerate_selected_pids (options, (GFunc) frida_collect_process_info, &op);
+    telco_process_query_options_enumerate_selected_pids (options, (GFunc) telco_collect_process_info, &op);
   }
   else
   {
@@ -80,7 +80,7 @@ frida_system_enumerate_processes (FridaProcessQueryOptions * options, int * resu
     while (bytes_returned == size);
 
     for (i = 0; i != bytes_returned / sizeof (DWORD); i++)
-      frida_collect_process_info (pids[i], &op);
+      telco_collect_process_info (pids[i], &op);
 
     g_free (pids);
   }
@@ -89,13 +89,13 @@ frida_system_enumerate_processes (FridaProcessQueryOptions * options, int * resu
 
   *result_length = op.result->len;
 
-  return (FridaHostProcessInfo *) g_array_free (op.result, FALSE);
+  return (TelcoHostProcessInfo *) g_array_free (op.result, FALSE);
 }
 
 static void
-frida_collect_process_info (guint pid, FridaEnumerateProcessesOperation * op)
+telco_collect_process_info (guint pid, TelcoEnumerateProcessesOperation * op)
 {
-  FridaHostProcessInfo info = { 0, };
+  TelcoHostProcessInfo info = { 0, };
   gboolean still_alive = TRUE;
   HANDLE handle;
   WCHAR program_path_utf16[MAX_PATH];
@@ -105,7 +105,7 @@ frida_collect_process_info (guint pid, FridaEnumerateProcessesOperation * op)
   if (handle == NULL)
     return;
 
-  if (!frida_get_process_filename (handle, program_path_utf16, G_N_ELEMENTS (program_path_utf16)))
+  if (!telco_get_process_filename (handle, program_path_utf16, G_N_ELEMENTS (program_path_utf16)))
     goto beach;
 
   program_path = g_utf16_to_utf8 (program_path_utf16, -1, NULL, NULL, NULL);
@@ -113,34 +113,34 @@ frida_collect_process_info (guint pid, FridaEnumerateProcessesOperation * op)
   info.pid = pid;
   info.name = g_path_get_basename (program_path);
 
-  info.parameters = frida_make_parameters_dict ();
+  info.parameters = telco_make_parameters_dict ();
 
-  if (op->scope != FRIDA_SCOPE_MINIMAL)
+  if (op->scope != TELCO_SCOPE_MINIMAL)
   {
     g_hash_table_insert (info.parameters, g_strdup ("path"),
         g_variant_ref_sink (g_variant_new_take_string (g_steal_pointer (&program_path))));
 
-    still_alive = frida_add_process_metadata (info.parameters, pid, handle, op);
+    still_alive = telco_add_process_metadata (info.parameters, pid, handle, op);
 
     if (pid == op->frontmost_pid)
       g_hash_table_insert (info.parameters, g_strdup ("frontmost"), g_variant_ref_sink (g_variant_new_boolean (TRUE)));
   }
 
-  if (op->scope == FRIDA_SCOPE_FULL)
+  if (op->scope == TELCO_SCOPE_FULL)
   {
     GVariantBuilder builder;
     GVariant * small_icon, * large_icon;
 
     g_variant_builder_init (&builder, G_VARIANT_TYPE ("aa{sv}"));
 
-    small_icon = _frida_icon_from_process_or_file (pid, program_path_utf16, FRIDA_ICON_SMALL);
+    small_icon = _telco_icon_from_process_or_file (pid, program_path_utf16, TELCO_ICON_SMALL);
     if (small_icon != NULL)
     {
       g_variant_builder_add_value (&builder, small_icon);
       g_variant_unref (small_icon);
     }
 
-    large_icon = _frida_icon_from_process_or_file (pid, program_path_utf16, FRIDA_ICON_LARGE);
+    large_icon = _telco_icon_from_process_or_file (pid, program_path_utf16, TELCO_ICON_LARGE);
     if (large_icon != NULL)
     {
       g_variant_builder_add_value (&builder, large_icon);
@@ -155,7 +155,7 @@ frida_collect_process_info (guint pid, FridaEnumerateProcessesOperation * op)
   if (still_alive)
     g_array_append_val (op->result, info);
   else
-    frida_host_process_info_destroy (&info);
+    telco_host_process_info_destroy (&info);
 
 beach:
   g_free (program_path);
@@ -163,7 +163,7 @@ beach:
 }
 
 void
-frida_system_kill (guint pid)
+telco_system_kill (guint pid)
 {
   HANDLE process;
 
@@ -176,31 +176,31 @@ frida_system_kill (guint pid)
 }
 
 gchar *
-frida_temporary_directory_get_system_tmp (void)
+telco_temporary_directory_get_system_tmp (void)
 {
   return g_strdup (g_get_tmp_dir ());
 }
 
 static gboolean
-frida_add_process_metadata (GHashTable * parameters, guint pid, HANDLE process, FridaEnumerateProcessesOperation * op)
+telco_add_process_metadata (GHashTable * parameters, guint pid, HANDLE process, TelcoEnumerateProcessesOperation * op)
 {
   GVariant * user;
   guint ppid;
   GVariant * started;
 
-  user = frida_get_process_user (process);
+  user = telco_get_process_user (process);
   if (user == NULL)
     return FALSE;
   g_hash_table_insert (parameters, g_strdup ("user"), g_variant_ref_sink (user));
 
   if (op->ppid_by_pid == NULL)
-    op->ppid_by_pid = frida_build_ppid_table ();
+    op->ppid_by_pid = telco_build_ppid_table ();
   ppid = GPOINTER_TO_UINT (g_hash_table_lookup (op->ppid_by_pid, GUINT_TO_POINTER (pid)));
   if (ppid == 0)
     return FALSE;
   g_hash_table_insert (parameters, g_strdup ("ppid"), g_variant_ref_sink (g_variant_new_int64 (ppid)));
 
-  started = frida_get_process_start_time (process);
+  started = telco_get_process_start_time (process);
   if (started == NULL)
     return FALSE;
   g_hash_table_insert (parameters, g_strdup ("started"), g_variant_ref_sink (started));
@@ -209,7 +209,7 @@ frida_add_process_metadata (GHashTable * parameters, guint pid, HANDLE process, 
 }
 
 static gboolean
-frida_get_process_filename (HANDLE process, WCHAR * name, DWORD name_capacity)
+telco_get_process_filename (HANDLE process, WCHAR * name, DWORD name_capacity)
 {
   gsize name_length;
   WCHAR drive_strings[DRIVE_STRINGS_MAX_LENGTH];
@@ -255,7 +255,7 @@ frida_get_process_filename (HANDLE process, WCHAR * name, DWORD name_capacity)
 }
 
 static GVariant *
-frida_get_process_user (HANDLE process)
+telco_get_process_user (HANDLE process)
 {
   GVariant * result = NULL;
   HANDLE token;
@@ -314,7 +314,7 @@ beach:
 }
 
 static GVariant *
-frida_get_process_start_time (HANDLE process)
+telco_get_process_start_time (HANDLE process)
 {
   GVariant * result;
   FILETIME creation_time, exit_time, kernel_time, user_time;
@@ -323,7 +323,7 @@ frida_get_process_start_time (HANDLE process)
   if (!GetProcessTimes (process, &creation_time, &exit_time, &kernel_time, &user_time))
     return NULL;
 
-  creation_dt = frida_parse_filetime (&creation_time);
+  creation_dt = telco_parse_filetime (&creation_time);
   result = g_variant_new_take_string (g_date_time_format_iso8601 (creation_dt));
   g_date_time_unref (creation_dt);
 
@@ -331,7 +331,7 @@ frida_get_process_start_time (HANDLE process)
 }
 
 static GHashTable *
-frida_build_ppid_table (void)
+telco_build_ppid_table (void)
 {
   GHashTable * result = NULL;
   HANDLE snapshot;
@@ -362,7 +362,7 @@ beach:
 }
 
 static guint
-frida_get_frontmost_pid (void)
+telco_get_frontmost_pid (void)
 {
   DWORD pid;
   HWND window;
@@ -378,13 +378,13 @@ frida_get_frontmost_pid (void)
 }
 
 static GDateTime *
-frida_parse_filetime (const FILETIME * ft)
+telco_parse_filetime (const FILETIME * ft)
 {
   GDateTime * result;
   gint64 unix_time, unix_sec, unix_usec;
   GDateTime * dt;
 
-  unix_time = frida_filetime_to_unix (ft);
+  unix_time = telco_filetime_to_unix (ft);
 
   unix_sec = unix_time / G_USEC_PER_SEC;
   unix_usec = unix_time % G_USEC_PER_SEC;
@@ -397,7 +397,7 @@ frida_parse_filetime (const FILETIME * ft)
 }
 
 static gint64
-frida_filetime_to_unix (const FILETIME * ft)
+telco_filetime_to_unix (const FILETIME * ft)
 {
   ULARGE_INTEGER u;
 

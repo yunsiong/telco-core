@@ -8,13 +8,13 @@ import sys
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate refined Frida API definitions")
+    parser = argparse.ArgumentParser(description="Generate refined Telco API definitions")
     parser.add_argument('--output', dest='output_type', choices=['bundle', 'header', 'vapi'], default='bundle')
     parser.add_argument('api_version', metavar='api-version', type=str)
-    parser.add_argument('core_vapi', metavar='/path/to/frida-core.vapi', type=argparse.FileType('r', encoding='utf-8'))
-    parser.add_argument('core_header', metavar='/path/to/frida-core.h', type=argparse.FileType('r', encoding='utf-8'))
-    parser.add_argument('base_vapi', metavar='/path/to/frida-base.vapi', type=argparse.FileType('r', encoding='utf-8'))
-    parser.add_argument('base_header', metavar='/path/to/frida-base.h', type=argparse.FileType('r', encoding='utf-8'))
+    parser.add_argument('core_vapi', metavar='/path/to/telco-core.vapi', type=argparse.FileType('r', encoding='utf-8'))
+    parser.add_argument('core_header', metavar='/path/to/telco-core.h', type=argparse.FileType('r', encoding='utf-8'))
+    parser.add_argument('base_vapi', metavar='/path/to/telco-base.vapi', type=argparse.FileType('r', encoding='utf-8'))
+    parser.add_argument('base_header', metavar='/path/to/telco-base.h', type=argparse.FileType('r', encoding='utf-8'))
     parser.add_argument('output_dir', metavar='/output/dir')
 
     args = parser.parse_args()
@@ -27,7 +27,7 @@ def main():
     output_dir = Path(args.output_dir)
 
     toplevel_names = [
-        "frida.vala",
+        "telco.vala",
         "control-service.vala",
         "portal-service.vala",
         "file-monitor.vala",
@@ -60,8 +60,8 @@ def main():
         emit_vapi(api, output_dir)
 
 def emit_header(api, output_dir):
-    with open(output_dir / 'frida-core.h', 'w', encoding='utf-8') as output_header_file:
-        output_header_file.write("#ifndef __FRIDA_CORE_H__\n#define __FRIDA_CORE_H__\n\n")
+    with open(output_dir / 'telco-core.h', 'w', encoding='utf-8') as output_header_file:
+        output_header_file.write("#ifndef __TELCO_CORE_H__\n#define __TELCO_CORE_H__\n\n")
 
         output_header_file.write("#include <glib.h>\n#include <glib-object.h>\n#include <gio/gio.h>\n#include <json-glib/json-glib.h>\n")
 
@@ -71,23 +71,23 @@ def emit_header(api, output_dir):
             output_header_file.write("\ntypedef struct _%s %s;" % (object_type.c_name, object_type.c_name))
             if object_type.c_iface_definition is not None:
                 output_header_file.write("\ntypedef struct _%sIface %sIface;" % (object_type.c_name, object_type.c_name))
-        output_header_file.write("\ntypedef struct _FridaHostSession FridaHostSession;")
+        output_header_file.write("\ntypedef struct _TelcoHostSession TelcoHostSession;")
 
         for enum in api.enum_types:
             output_header_file.write("\n\n" + enum.c_definition)
 
         output_header_file.write("\n\n/* Library lifetime */")
-        output_header_file.write("\nvoid frida_init (void);")
-        output_header_file.write("\nvoid frida_shutdown (void);")
-        output_header_file.write("\nvoid frida_deinit (void);")
-        output_header_file.write("\nGMainContext * frida_get_main_context (void);")
+        output_header_file.write("\nvoid telco_init (void);")
+        output_header_file.write("\nvoid telco_shutdown (void);")
+        output_header_file.write("\nvoid telco_deinit (void);")
+        output_header_file.write("\nGMainContext * telco_get_main_context (void);")
 
         output_header_file.write("\n\n/* Object lifetime */")
-        output_header_file.write("\nvoid frida_unref (gpointer obj);")
+        output_header_file.write("\nvoid telco_unref (gpointer obj);")
 
         output_header_file.write("\n\n/* Library versioning */")
-        output_header_file.write("\nvoid frida_version (guint * major, guint * minor, guint * micro, guint * nano);")
-        output_header_file.write("\nconst gchar * frida_version_string (void);")
+        output_header_file.write("\nvoid telco_version (guint * major, guint * minor, guint * micro, guint * nano);")
+        output_header_file.write("\nconst gchar * telco_version_string (void);")
 
         for object_type in api.object_types:
             output_header_file.write("\n\n/* %s */" % object_type.name)
@@ -110,7 +110,7 @@ def emit_header(api, output_dir):
 
         if len(api.error_types) > 0:
             output_header_file.write("\n\n/* Errors */\n")
-            output_header_file.write("\n\n".join(map(lambda enum: "GQuark frida_%(name_lc)s_quark (void);\n" \
+            output_header_file.write("\n\n".join(map(lambda enum: "GQuark telco_%(name_lc)s_quark (void);\n" \
                 % { 'name_lc': enum.name_lc }, api.error_types)))
             output_header_file.write("\n")
             output_header_file.write("\n\n".join(map(lambda enum: enum.c_definition, api.error_types)))
@@ -125,16 +125,16 @@ def emit_header(api, output_dir):
         output_header_file.write("\n\n/* Macros */")
         macros = []
         for enum in api.enum_types:
-            macros.append("#define FRIDA_TYPE_%(name_uc)s (frida_%(name_lc)s_get_type ())" \
+            macros.append("#define TELCO_TYPE_%(name_uc)s (telco_%(name_lc)s_get_type ())" \
                 % { 'name_lc': enum.name_lc, 'name_uc': enum.name_uc })
         for object_type in api.object_types:
-            macros.append("""#define FRIDA_TYPE_%(name_uc)s (frida_%(name_lc)s_get_type ())
-#define FRIDA_%(name_uc)s(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FRIDA_TYPE_%(name_uc)s, Frida%(name)s))
-#define FRIDA_IS_%(name_uc)s(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FRIDA_TYPE_%(name_uc)s))""" \
+            macros.append("""#define TELCO_TYPE_%(name_uc)s (telco_%(name_lc)s_get_type ())
+#define TELCO_%(name_uc)s(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), TELCO_TYPE_%(name_uc)s, Telco%(name)s))
+#define TELCO_IS_%(name_uc)s(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), TELCO_TYPE_%(name_uc)s))""" \
                 % { 'name': object_type.name, 'name_lc': object_type.name_lc, 'name_uc': object_type.name_uc })
 
         for enum in api.error_types:
-            macros.append("#define FRIDA_%(name_uc)s (frida_%(name_lc)s_quark ())" \
+            macros.append("#define TELCO_%(name_uc)s (telco_%(name_lc)s_quark ())" \
                 % { 'name_lc': enum.name_lc, 'name_uc': enum.name_uc })
         output_header_file.write("\n" + "\n\n".join(macros))
 
@@ -143,9 +143,9 @@ def emit_header(api, output_dir):
         output_header_file.write("\n\n#endif\n")
 
 def emit_vapi(api, output_dir):
-    with open(output_dir / "frida-core-{0}.vapi".format(api.version), "w", encoding='utf-8') as output_vapi_file:
-        output_vapi_file.write("[CCode (cheader_filename = \"frida-core.h\", cprefix = \"Frida\", lower_case_cprefix = \"frida_\")]")
-        output_vapi_file.write("\nnamespace Frida {")
+    with open(output_dir / "telco-core-{0}.vapi".format(api.version), "w", encoding='utf-8') as output_vapi_file:
+        output_vapi_file.write("[CCode (cheader_filename = \"telco-core.h\", cprefix = \"Telco\", lower_case_cprefix = \"telco_\")]")
+        output_vapi_file.write("\nnamespace Telco {")
         output_vapi_file.write("\n\tpublic static void init ();")
         output_vapi_file.write("\n\tpublic static void shutdown ();")
         output_vapi_file.write("\n\tpublic static void deinit ();")
@@ -181,7 +181,7 @@ def emit_vapi(api, output_dir):
 
         output_vapi_file.write("\n}\n")
 
-    with open(output_dir / "frida-core-{0}.deps".format(api.version), "w", encoding='utf-8') as output_deps_file:
+    with open(output_dir / "telco-core-{0}.deps".format(api.version), "w", encoding='utf-8') as output_deps_file:
         output_deps_file.write("glib-2.0\n")
         output_deps_file.write("gobject-2.0\n")
         output_deps_file.write("gio-2.0\n")
@@ -345,7 +345,7 @@ def parse_api(api_version, toplevel_code, core_vapi, core_header, base_vapi, bas
         elif current_enum is not None:
             current_enum.vapi_members.append(stripped_line)
         elif current_object_type is not None and stripped_line.startswith("public"):
-            if stripped_line.startswith("public " + current_object_type.name + " (") or stripped_line.startswith("public static Frida." + current_object_type.name + " @new ("):
+            if stripped_line.startswith("public " + current_object_type.name + " (") or stripped_line.startswith("public static Telco." + current_object_type.name + " @new ("):
                 if len(current_object_type.c_constructors) > 0:
                     current_object_type.vapi_constructor = stripped_line
             elif stripped_line.startswith("public signal"):
@@ -370,7 +370,7 @@ def parse_api(api_version, toplevel_code, core_vapi, core_header, base_vapi, bas
 
     functions = [f for f in parse_vapi_functions(base_vapi) if function_is_public(f.name)]
     for f in functions:
-        m = re.search(r"^[\w\*]+ frida_{}.+?;".format(f.name), all_headers, re.MULTILINE | re.DOTALL)
+        m = re.search(r"^[\w\*]+ telco_{}.+?;".format(f.name), all_headers, re.MULTILINE | re.DOTALL)
         f.c_prototype = beautify_cprototype(m.group(0))
 
     return ApiSpec(api_version, object_types, functions, enum_types, error_types)
@@ -409,7 +409,7 @@ class ApiEnum:
         self.name = name
         self.name_lc = camel_identifier_to_lc(self.name)
         self.name_uc = camel_identifier_to_uc(self.name)
-        self.c_name = 'Frida' + name
+        self.c_name = 'Telco' + name
         self.c_name_lc = camel_identifier_to_lc(self.c_name)
         self.c_definition = None
         self.vapi_declaration = None
@@ -423,7 +423,7 @@ class ApiObjectType:
         self.kind = kind
         self.property_names = []
         self.method_names = []
-        self.c_name = 'Frida' + name
+        self.c_name = 'Telco' + name
         self.c_name_lc = camel_identifier_to_lc(self.c_name)
         self.c_get_type = None
         self.c_constructors = []

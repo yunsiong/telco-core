@@ -22,7 +22,7 @@
 #ifndef SOCK_CLOEXEC
 # define SOCK_CLOEXEC 0x80000
 #endif
-#define FRIDA_GLIBC_RTLD_DLOPEN 0x80000000U
+#define TELCO_GLIBC_RTLD_DLOPEN 0x80000000U
 
 #ifndef MIN
 # define MIN(a, b) (((a) < (b)) ? (a) : (b))
@@ -31,8 +31,8 @@
 # define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
-#define FRIDA_STRINGIFY(identifier) _FRIDA_STRINGIFY (identifier)
-#define _FRIDA_STRINGIFY(identifier) #identifier
+#define TELCO_STRINGIFY(identifier) _TELCO_STRINGIFY (identifier)
+#define _TELCO_STRINGIFY(identifier) #identifier
 
 #ifndef DF_1_PIE
 # define DF_1_PIE 0x08000000
@@ -46,73 +46,73 @@
 # define AT_EXECFN  31
 #endif
 
-typedef struct _FridaCollectLibcApiContext FridaCollectLibcApiContext;
-typedef struct _FridaProcessLayout FridaProcessLayout;
-typedef struct _FridaRDebug FridaRDebug;
-typedef int FridaRState;
-typedef struct _FridaLinkMap FridaLinkMap;
-typedef struct _FridaOpenFileForMappedRangeContext FridaOpenFileForMappedRangeContext;
-typedef struct _FridaDetectRtldFlavorContext FridaDetectRtldFlavorContext;
-typedef struct _FridaEntrypointParameters FridaEntrypointParameters;
-typedef ssize_t (* FridaParseFunc) (void * data, size_t size, void * user_data);
+typedef struct _TelcoCollectLibcApiContext TelcoCollectLibcApiContext;
+typedef struct _TelcoProcessLayout TelcoProcessLayout;
+typedef struct _TelcoRDebug TelcoRDebug;
+typedef int TelcoRState;
+typedef struct _TelcoLinkMap TelcoLinkMap;
+typedef struct _TelcoOpenFileForMappedRangeContext TelcoOpenFileForMappedRangeContext;
+typedef struct _TelcoDetectRtldFlavorContext TelcoDetectRtldFlavorContext;
+typedef struct _TelcoEntrypointParameters TelcoEntrypointParameters;
+typedef ssize_t (* TelcoParseFunc) (void * data, size_t size, void * user_data);
 
-struct _FridaCollectLibcApiContext
+struct _TelcoCollectLibcApiContext
 {
   int total_missing;
-  FridaRtldFlavor rtld_flavor;
-  FridaLibcApi * api;
+  TelcoRtldFlavor rtld_flavor;
+  TelcoLibcApi * api;
 };
 
-struct _FridaProcessLayout
+struct _TelcoProcessLayout
 {
   ElfW(Phdr) * phdrs;
   ElfW(Half) phdr_size;
   ElfW(Half) phdr_count;
   ElfW(Ehdr) * interpreter;
-  FridaRtldFlavor rtld_flavor;
-  FridaRDebug * r_debug;
+  TelcoRtldFlavor rtld_flavor;
+  TelcoRDebug * r_debug;
   void * r_brk;
   void * libc;
 };
 
-struct _FridaRDebug
+struct _TelcoRDebug
 {
   int r_version;
-  FridaLinkMap * r_map;
+  TelcoLinkMap * r_map;
   ElfW(Addr) r_brk;
-  FridaRState r_state;
+  TelcoRState r_state;
   ElfW(Addr) r_ldbase;
 };
 
-enum _FridaRState
+enum _TelcoRState
 {
   RT_CONSISTENT,
   RT_ADD,
   RT_DELETE
 };
 
-struct _FridaLinkMap
+struct _TelcoLinkMap
 {
   ElfW(Addr) l_addr;
   char * l_name;
   ElfW(Dyn) * l_ld;
-  FridaLinkMap * l_next;
-  FridaLinkMap * l_prev;
+  TelcoLinkMap * l_next;
+  TelcoLinkMap * l_prev;
 };
 
-struct _FridaOpenFileForMappedRangeContext
+struct _TelcoOpenFileForMappedRangeContext
 {
   void * base;
   int fd;
 };
 
-struct _FridaDetectRtldFlavorContext
+struct _TelcoDetectRtldFlavorContext
 {
   ElfW(Ehdr) * interpreter;
-  FridaRtldFlavor flavor;
+  TelcoRtldFlavor flavor;
 };
 
-struct _FridaEntrypointParameters
+struct _TelcoEntrypointParameters
 {
   intptr_t argc;
   char * argv[2];
@@ -120,89 +120,89 @@ struct _FridaEntrypointParameters
   ElfW(auxv_t) auxv[9];
 };
 
-static bool frida_resolve_libc_apis (const FridaProcessLayout * layout, FridaLibcApi * libc);
-static bool frida_collect_libc_symbol (const FridaElfExportDetails * details, void * user_data);
-static bool frida_collect_android_linker_symbol (const FridaElfExportDetails * details, void * user_data);
+static bool telco_resolve_libc_apis (const TelcoProcessLayout * layout, TelcoLibcApi * libc);
+static bool telco_collect_libc_symbol (const TelcoElfExportDetails * details, void * user_data);
+static bool telco_collect_android_linker_symbol (const TelcoElfExportDetails * details, void * user_data);
 
-static bool frida_probe_process (size_t page_size, FridaProcessLayout * layout);
-static void frida_enumerate_module_symbols_on_disk (void * loaded_base, FridaFoundElfSymbolFunc func, void * user_data);
-static int frida_open_file_for_mapped_range_with_base (void * base);
-static ssize_t frida_open_file_for_matching_maps_line (void * data, size_t size, void * user_data);
-static FridaRtldFlavor frida_detect_rtld_flavor (ElfW(Ehdr) * interpreter);
-static FridaRtldFlavor frida_infer_rtld_flavor_from_filename (const char * name);
-static ssize_t frida_try_infer_rtld_flavor_from_maps_line (void * data, size_t size, void * user_data);
-static bool frida_path_is_libc (const char * path, FridaRtldFlavor rtld_flavor);
-static ssize_t frida_parse_auxv_entry (void * data, size_t size, void * user_data);
-static bool frida_collect_interpreter_symbol (const FridaElfExportDetails * details, void * user_data);
-static ssize_t frida_try_find_libc_from_maps_line (void * data, size_t size, void * user_data);
-static void frida_try_load_libc_and_raise (FridaBootstrapContext * ctx);
-static int frida_libc_main (int argc, char * argv[]);
-static void * frida_map_elf (FridaBootstrapContext * ctx, const char * path, void ** entrypoint);
+static bool telco_probe_process (size_t page_size, TelcoProcessLayout * layout);
+static void telco_enumerate_module_symbols_on_disk (void * loaded_base, TelcoFoundElfSymbolFunc func, void * user_data);
+static int telco_open_file_for_mapped_range_with_base (void * base);
+static ssize_t telco_open_file_for_matching_maps_line (void * data, size_t size, void * user_data);
+static TelcoRtldFlavor telco_detect_rtld_flavor (ElfW(Ehdr) * interpreter);
+static TelcoRtldFlavor telco_infer_rtld_flavor_from_filename (const char * name);
+static ssize_t telco_try_infer_rtld_flavor_from_maps_line (void * data, size_t size, void * user_data);
+static bool telco_path_is_libc (const char * path, TelcoRtldFlavor rtld_flavor);
+static ssize_t telco_parse_auxv_entry (void * data, size_t size, void * user_data);
+static bool telco_collect_interpreter_symbol (const TelcoElfExportDetails * details, void * user_data);
+static ssize_t telco_try_find_libc_from_maps_line (void * data, size_t size, void * user_data);
+static void telco_try_load_libc_and_raise (TelcoBootstrapContext * ctx);
+static int telco_libc_main (int argc, char * argv[]);
+static void * telco_map_elf (TelcoBootstrapContext * ctx, const char * path, void ** entrypoint);
 
-static void frida_parse_file (const char * path, FridaParseFunc parse, void * user_data);
-static size_t frida_parse_size (const char * str);
-static bool frida_str_has_prefix (const char * str, const char * prefix);
-static bool frida_str_has_suffix (const char * str, const char * suffix);
+static void telco_parse_file (const char * path, TelcoParseFunc parse, void * user_data);
+static size_t telco_parse_size (const char * str);
+static bool telco_str_has_prefix (const char * str, const char * prefix);
+static bool telco_str_has_suffix (const char * str, const char * suffix);
 
-static int frida_socketpair (int domain, int type, int protocol, int sv[2]);
-static int frida_prctl (int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5);
+static int telco_socketpair (int domain, int type, int protocol, int sv[2]);
+static int telco_prctl (int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5);
 
 __attribute__ ((section (".text.entrypoint")))
 __attribute__ ((visibility ("default")))
-FridaBootstrapStatus
-frida_bootstrap (FridaBootstrapContext * ctx)
+TelcoBootstrapStatus
+telco_bootstrap (TelcoBootstrapContext * ctx)
 {
-  FridaLibcApi * libc = ctx->libc;
-  FridaProcessLayout process;
+  TelcoLibcApi * libc = ctx->libc;
+  TelcoProcessLayout process;
 
-  if (!frida_probe_process (ctx->page_size, &process))
-    return FRIDA_BOOTSTRAP_AUXV_NOT_FOUND;
+  if (!telco_probe_process (ctx->page_size, &process))
+    return TELCO_BOOTSTRAP_AUXV_NOT_FOUND;
 
   ctx->rtld_flavor = process.rtld_flavor;
   ctx->rtld_base = process.interpreter;
   ctx->r_brk = process.r_brk;
 
   if (process.interpreter != NULL && process.libc == NULL)
-    return FRIDA_BOOTSTRAP_TOO_EARLY;
+    return TELCO_BOOTSTRAP_TOO_EARLY;
 
   if (process.interpreter == NULL && process.libc == NULL)
   {
-    frida_try_load_libc_and_raise (ctx);
-    return FRIDA_BOOTSTRAP_LIBC_LOAD_ERROR;
+    telco_try_load_libc_and_raise (ctx);
+    return TELCO_BOOTSTRAP_LIBC_LOAD_ERROR;
   }
 
-  if (!frida_resolve_libc_apis (&process, libc))
-    return FRIDA_BOOTSTRAP_LIBC_UNSUPPORTED;
+  if (!telco_resolve_libc_apis (&process, libc))
+    return TELCO_BOOTSTRAP_LIBC_UNSUPPORTED;
 
   ctx->loader_base = mmap (NULL, ctx->loader_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (ctx->loader_base == MAP_FAILED)
-    return FRIDA_BOOTSTRAP_MMAP_ERROR;
+    return TELCO_BOOTSTRAP_MMAP_ERROR;
 
   ctx->ctrlfds[0] = -1;
   ctx->ctrlfds[1] = -1;
   if (ctx->enable_ctrlfds)
-    frida_socketpair (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, ctx->ctrlfds);
+    telco_socketpair (AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, ctx->ctrlfds);
 
-  return FRIDA_BOOTSTRAP_SUCCESS;
+  return TELCO_BOOTSTRAP_SUCCESS;
 }
 
 static bool
-frida_resolve_libc_apis (const FridaProcessLayout * layout, FridaLibcApi * libc)
+telco_resolve_libc_apis (const TelcoProcessLayout * layout, TelcoLibcApi * libc)
 {
-  FridaCollectLibcApiContext ctx;
+  TelcoCollectLibcApiContext ctx;
 
-  memset (libc, 0, sizeof (FridaLibcApi));
+  memset (libc, 0, sizeof (TelcoLibcApi));
   libc->dlopen_flags = RTLD_LAZY;
 
   ctx.total_missing = 17;
-  if (layout->rtld_flavor == FRIDA_RTLD_ANDROID)
+  if (layout->rtld_flavor == TELCO_RTLD_ANDROID)
     ctx.total_missing -= 4;
   ctx.rtld_flavor = layout->rtld_flavor;
   ctx.api = libc;
-  frida_elf_enumerate_exports (layout->libc, frida_collect_libc_symbol, &ctx);
+  telco_elf_enumerate_exports (layout->libc, telco_collect_libc_symbol, &ctx);
 
   if (ctx.total_missing > 0 &&
-      (libc->dlopen_flags & FRIDA_GLIBC_RTLD_DLOPEN) != 0 &&
+      (libc->dlopen_flags & TELCO_GLIBC_RTLD_DLOPEN) != 0 &&
       libc->dlerror == NULL)
   {
     ctx.total_missing--;
@@ -228,15 +228,15 @@ frida_resolve_libc_apis (const FridaProcessLayout * layout, FridaLibcApi * libc)
   if (ctx.total_missing != 0)
     return false;
 
-  if (layout->rtld_flavor == FRIDA_RTLD_ANDROID)
+  if (layout->rtld_flavor == TELCO_RTLD_ANDROID)
   {
     bool found_all_or_none;
 
     ctx.total_missing = 4;
-    frida_elf_enumerate_exports (layout->interpreter, frida_collect_android_linker_symbol, &ctx);
+    telco_elf_enumerate_exports (layout->interpreter, telco_collect_android_linker_symbol, &ctx);
 
     if (ctx.total_missing == 4)
-      frida_enumerate_module_symbols_on_disk (layout->interpreter, frida_collect_android_linker_symbol, &ctx);
+      telco_enumerate_module_symbols_on_disk (layout->interpreter, telco_collect_android_linker_symbol, &ctx);
 
     found_all_or_none = ctx.total_missing == 0 || ctx.total_missing == 4;
     if (!found_all_or_none)
@@ -247,17 +247,17 @@ frida_resolve_libc_apis (const FridaProcessLayout * layout, FridaLibcApi * libc)
 }
 
 static bool
-frida_collect_libc_symbol (const FridaElfExportDetails * details, void * user_data)
+telco_collect_libc_symbol (const TelcoElfExportDetails * details, void * user_data)
 {
-  FridaCollectLibcApiContext * ctx = user_data;
-  FridaLibcApi * api = ctx->api;
+  TelcoCollectLibcApiContext * ctx = user_data;
+  TelcoLibcApi * api = ctx->api;
 
   if (details->type != STT_FUNC)
     return true;
 
-#define FRIDA_TRY_COLLECT(e) \
-    FRIDA_TRY_COLLECT_NAMED (e, FRIDA_STRINGIFY (e))
-#define FRIDA_TRY_COLLECT_NAMED(e, n) \
+#define TELCO_TRY_COLLECT(e) \
+    TELCO_TRY_COLLECT_NAMED (e, TELCO_STRINGIFY (e))
+#define TELCO_TRY_COLLECT_NAMED(e, n) \
     if (api->e == NULL && strcmp (details->name, n) == 0) \
     { \
       api->e = details->address; \
@@ -265,58 +265,58 @@ frida_collect_libc_symbol (const FridaElfExportDetails * details, void * user_da
       goto beach; \
     }
 
-  FRIDA_TRY_COLLECT (printf)
-  FRIDA_TRY_COLLECT (sprintf)
+  TELCO_TRY_COLLECT (printf)
+  TELCO_TRY_COLLECT (sprintf)
 
-  FRIDA_TRY_COLLECT (mmap)
-  FRIDA_TRY_COLLECT (munmap)
-  FRIDA_TRY_COLLECT (socket)
-  FRIDA_TRY_COLLECT (socketpair)
-  FRIDA_TRY_COLLECT (connect)
-  FRIDA_TRY_COLLECT (recvmsg)
-  FRIDA_TRY_COLLECT (send)
-  FRIDA_TRY_COLLECT (fcntl)
-  FRIDA_TRY_COLLECT (close)
+  TELCO_TRY_COLLECT (mmap)
+  TELCO_TRY_COLLECT (munmap)
+  TELCO_TRY_COLLECT (socket)
+  TELCO_TRY_COLLECT (socketpair)
+  TELCO_TRY_COLLECT (connect)
+  TELCO_TRY_COLLECT (recvmsg)
+  TELCO_TRY_COLLECT (send)
+  TELCO_TRY_COLLECT (fcntl)
+  TELCO_TRY_COLLECT (close)
 
-  FRIDA_TRY_COLLECT (pthread_create)
-  FRIDA_TRY_COLLECT (pthread_detach)
+  TELCO_TRY_COLLECT (pthread_create)
+  TELCO_TRY_COLLECT (pthread_detach)
 
-  if (ctx->rtld_flavor != FRIDA_RTLD_ANDROID)
+  if (ctx->rtld_flavor != TELCO_RTLD_ANDROID)
   {
-    FRIDA_TRY_COLLECT (dlopen)
+    TELCO_TRY_COLLECT (dlopen)
     if (api->dlopen == NULL && strcmp (details->name, "__libc_dlopen_mode") == 0)
     {
       api->dlopen = details->address;
-      api->dlopen_flags |= FRIDA_GLIBC_RTLD_DLOPEN;
+      api->dlopen_flags |= TELCO_GLIBC_RTLD_DLOPEN;
       ctx->total_missing--;
       goto beach;
     }
 
-    FRIDA_TRY_COLLECT (dlclose)
-    FRIDA_TRY_COLLECT_NAMED (dlclose, "__libc_dlclose")
+    TELCO_TRY_COLLECT (dlclose)
+    TELCO_TRY_COLLECT_NAMED (dlclose, "__libc_dlclose")
 
-    FRIDA_TRY_COLLECT (dlsym)
-    FRIDA_TRY_COLLECT_NAMED (dlsym, "__libc_dlsym")
+    TELCO_TRY_COLLECT (dlsym)
+    TELCO_TRY_COLLECT_NAMED (dlsym, "__libc_dlsym")
 
-    FRIDA_TRY_COLLECT (dlerror)
+    TELCO_TRY_COLLECT (dlerror)
   }
 
-#undef FRIDA_TRY_COLLECT
+#undef TELCO_TRY_COLLECT
 
 beach:
   return ctx->total_missing > 0;
 }
 
 static bool
-frida_collect_android_linker_symbol (const FridaElfExportDetails * details, void * user_data)
+telco_collect_android_linker_symbol (const TelcoElfExportDetails * details, void * user_data)
 {
-  FridaCollectLibcApiContext * ctx = user_data;
-  FridaLibcApi * api = ctx->api;
+  TelcoCollectLibcApiContext * ctx = user_data;
+  TelcoLibcApi * api = ctx->api;
 
   if (details->type != STT_FUNC)
     return true;
 
-#define FRIDA_TRY_COLLECT(e, n) \
+#define TELCO_TRY_COLLECT(e, n) \
     if (api->e == NULL && strcmp (details->name, n) == 0) \
     { \
       api->e = details->address; \
@@ -324,24 +324,24 @@ frida_collect_android_linker_symbol (const FridaElfExportDetails * details, void
       goto beach; \
     }
 
-  FRIDA_TRY_COLLECT (dlopen, "__loader_dlopen");
-  FRIDA_TRY_COLLECT (dlclose, "__loader_dlclose");
-  FRIDA_TRY_COLLECT (dlsym, "__loader_dlsym");
-  FRIDA_TRY_COLLECT (dlerror, "__loader_dlerror");
+  TELCO_TRY_COLLECT (dlopen, "__loader_dlopen");
+  TELCO_TRY_COLLECT (dlclose, "__loader_dlclose");
+  TELCO_TRY_COLLECT (dlsym, "__loader_dlsym");
+  TELCO_TRY_COLLECT (dlerror, "__loader_dlerror");
 
-  FRIDA_TRY_COLLECT (dlopen, "__dl__Z8__dlopenPKciPKv");
-  FRIDA_TRY_COLLECT (dlclose, "__dl__Z9__dlclosePv");
-  FRIDA_TRY_COLLECT (dlsym, "__dl__Z7__dlsymPvPKcPKv");
-  FRIDA_TRY_COLLECT (dlerror, "__dl__Z9__dlerrorv");
+  TELCO_TRY_COLLECT (dlopen, "__dl__Z8__dlopenPKciPKv");
+  TELCO_TRY_COLLECT (dlclose, "__dl__Z9__dlclosePv");
+  TELCO_TRY_COLLECT (dlsym, "__dl__Z7__dlsymPvPKcPKv");
+  TELCO_TRY_COLLECT (dlerror, "__dl__Z9__dlerrorv");
 
-#undef FRIDA_TRY_COLLECT
+#undef TELCO_TRY_COLLECT
 
 beach:
   return ctx->total_missing > 0;
 }
 
 static bool
-frida_probe_process (size_t page_size, FridaProcessLayout * layout)
+telco_probe_process (size_t page_size, TelcoProcessLayout * layout)
 {
   int previous_dumpable;
   bool use_proc_fallback;
@@ -350,40 +350,40 @@ frida_probe_process (size_t page_size, FridaProcessLayout * layout)
   layout->phdr_size = 0;
   layout->phdr_count = 0;
   layout->interpreter = NULL;
-  layout->rtld_flavor = FRIDA_RTLD_UNKNOWN;
+  layout->rtld_flavor = TELCO_RTLD_UNKNOWN;
   layout->r_debug = NULL;
   layout->r_brk = NULL;
   layout->libc = NULL;
 
-  previous_dumpable = frida_prctl (PR_GET_DUMPABLE, 0, 0, 0, 0);
+  previous_dumpable = telco_prctl (PR_GET_DUMPABLE, 0, 0, 0, 0);
   if (previous_dumpable != -1 && previous_dumpable != 1)
-    frida_prctl (PR_SET_DUMPABLE, 1, 0, 0, 0);
+    telco_prctl (PR_SET_DUMPABLE, 1, 0, 0, 0);
 
-  frida_parse_file ("/proc/self/auxv", frida_parse_auxv_entry, layout);
+  telco_parse_file ("/proc/self/auxv", telco_parse_auxv_entry, layout);
 
   if (previous_dumpable != -1 && previous_dumpable != 1)
-    frida_prctl (PR_SET_DUMPABLE, previous_dumpable, 0, 0, 0);
+    telco_prctl (PR_SET_DUMPABLE, previous_dumpable, 0, 0, 0);
 
   if (layout->phdrs == NULL)
     return false;
 
-  layout->rtld_flavor = frida_detect_rtld_flavor (layout->interpreter);
+  layout->rtld_flavor = telco_detect_rtld_flavor (layout->interpreter);
 
   if (layout->interpreter != NULL)
   {
-    frida_elf_enumerate_exports (layout->interpreter, frida_collect_interpreter_symbol, layout);
+    telco_elf_enumerate_exports (layout->interpreter, telco_collect_interpreter_symbol, layout);
 
     if (layout->r_debug == NULL)
-      frida_enumerate_module_symbols_on_disk (layout->interpreter, frida_collect_interpreter_symbol, layout);
+      telco_enumerate_module_symbols_on_disk (layout->interpreter, telco_collect_interpreter_symbol, layout);
 
     if (layout->r_debug != NULL)
     {
-      FridaRDebug * r = layout->r_debug;
-      FridaLinkMap * map;
+      TelcoRDebug * r = layout->r_debug;
+      TelcoLinkMap * map;
 
       for (map = r->r_map; map != NULL; map = map->l_next)
       {
-        if (frida_path_is_libc (map->l_name, layout->rtld_flavor))
+        if (telco_path_is_libc (map->l_name, layout->rtld_flavor))
         {
           layout->libc = (void *) map->l_addr;
           break;
@@ -425,7 +425,7 @@ frida_probe_process (size_t page_size, FridaProcessLayout * layout)
         if (layout->r_brk == NULL)
         {
           const ElfW(Ehdr) * program = (const ElfW(Ehdr) *)
-              frida_elf_compute_base_from_phdrs (layout->phdrs, layout->phdr_size, layout->phdr_count, page_size);
+              telco_elf_compute_base_from_phdrs (layout->phdrs, layout->phdr_size, layout->phdr_count, page_size);
           layout->r_brk = (void *) (program->e_entry + map->l_addr);
         }
       }
@@ -443,47 +443,47 @@ frida_probe_process (size_t page_size, FridaProcessLayout * layout)
   }
 
   if (use_proc_fallback)
-    frida_parse_file ("/proc/self/maps", frida_try_find_libc_from_maps_line, layout);
+    telco_parse_file ("/proc/self/maps", telco_try_find_libc_from_maps_line, layout);
 
   return true;
 }
 
 static void
-frida_enumerate_module_symbols_on_disk (void * loaded_base, FridaFoundElfSymbolFunc func, void * user_data)
+telco_enumerate_module_symbols_on_disk (void * loaded_base, TelcoFoundElfSymbolFunc func, void * user_data)
 {
   int fd;
   off_t size;
   void * elf;
 
-  fd = frida_open_file_for_mapped_range_with_base (loaded_base);
+  fd = telco_open_file_for_mapped_range_with_base (loaded_base);
   if (fd == -1)
     return;
   size = lseek (fd, 0, SEEK_END);
   elf = mmap (NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 
-  frida_elf_enumerate_symbols (elf, loaded_base, func, user_data);
+  telco_elf_enumerate_symbols (elf, loaded_base, func, user_data);
 
   munmap (elf, size);
   close (fd);
 }
 
 static int
-frida_open_file_for_mapped_range_with_base (void * base)
+telco_open_file_for_mapped_range_with_base (void * base)
 {
-  FridaOpenFileForMappedRangeContext ctx;
+  TelcoOpenFileForMappedRangeContext ctx;
 
   ctx.base = base;
   ctx.fd = -1;
-  frida_parse_file ("/proc/self/maps", frida_open_file_for_matching_maps_line, &ctx);
+  telco_parse_file ("/proc/self/maps", telco_open_file_for_matching_maps_line, &ctx);
 
   return ctx.fd;
 }
 
 static ssize_t
-frida_open_file_for_matching_maps_line (void * data, size_t size, void * user_data)
+telco_open_file_for_matching_maps_line (void * data, size_t size, void * user_data)
 {
   char * line = data;
-  FridaOpenFileForMappedRangeContext * ctx = user_data;
+  TelcoOpenFileForMappedRangeContext * ctx = user_data;
   char * next_newline;
   void * base;
 
@@ -493,7 +493,7 @@ frida_open_file_for_matching_maps_line (void * data, size_t size, void * user_da
 
   *next_newline = '\0';
 
-  base = (void *) frida_parse_size (line);
+  base = (void *) telco_parse_size (line);
   if (base == ctx->base)
   {
     const char * path = strchr (line, '/');
@@ -507,53 +507,53 @@ frida_open_file_for_matching_maps_line (void * data, size_t size, void * user_da
   return (next_newline + 1) - (char *) data;
 }
 
-static FridaRtldFlavor
-frida_detect_rtld_flavor (ElfW(Ehdr) * interpreter)
+static TelcoRtldFlavor
+telco_detect_rtld_flavor (ElfW(Ehdr) * interpreter)
 {
   const char * soname;
-  FridaDetectRtldFlavorContext ctx;
+  TelcoDetectRtldFlavorContext ctx;
 
   if (interpreter == NULL)
-    return FRIDA_RTLD_NONE;
+    return TELCO_RTLD_NONE;
 
-  soname = frida_elf_query_soname (interpreter);
+  soname = telco_elf_query_soname (interpreter);
   if (soname != NULL)
-    return frida_infer_rtld_flavor_from_filename (soname);
+    return telco_infer_rtld_flavor_from_filename (soname);
 
   ctx.interpreter = interpreter;
-  ctx.flavor = FRIDA_RTLD_UNKNOWN;
-  frida_parse_file ("/proc/self/maps", frida_try_infer_rtld_flavor_from_maps_line, &ctx);
+  ctx.flavor = TELCO_RTLD_UNKNOWN;
+  telco_parse_file ("/proc/self/maps", telco_try_infer_rtld_flavor_from_maps_line, &ctx);
 
   return ctx.flavor;
 }
 
-static FridaRtldFlavor
-frida_infer_rtld_flavor_from_filename (const char * name)
+static TelcoRtldFlavor
+telco_infer_rtld_flavor_from_filename (const char * name)
 {
-  if (frida_str_has_prefix (name, "ld-linux-"))
-    return FRIDA_RTLD_GLIBC;
+  if (telco_str_has_prefix (name, "ld-linux-"))
+    return TELCO_RTLD_GLIBC;
 
-  if (frida_str_has_prefix (name, "ld-uClibc"))
-    return FRIDA_RTLD_UCLIBC;
+  if (telco_str_has_prefix (name, "ld-uClibc"))
+    return TELCO_RTLD_UCLIBC;
 
   if (strcmp (name, "libc.so") == 0)
-    return FRIDA_RTLD_MUSL;
+    return TELCO_RTLD_MUSL;
 
   if (strcmp (name, "ld-android.so") == 0)
-    return FRIDA_RTLD_ANDROID;
+    return TELCO_RTLD_ANDROID;
   if (strcmp (name, "linker") == 0)
-    return FRIDA_RTLD_ANDROID;
+    return TELCO_RTLD_ANDROID;
   if (strcmp (name, "linker64") == 0)
-    return FRIDA_RTLD_ANDROID;
+    return TELCO_RTLD_ANDROID;
 
-  return FRIDA_RTLD_UNKNOWN;
+  return TELCO_RTLD_UNKNOWN;
 }
 
 static ssize_t
-frida_try_infer_rtld_flavor_from_maps_line (void * data, size_t size, void * user_data)
+telco_try_infer_rtld_flavor_from_maps_line (void * data, size_t size, void * user_data)
 {
   char * line = data;
-  FridaDetectRtldFlavorContext * ctx = user_data;
+  TelcoDetectRtldFlavorContext * ctx = user_data;
   char * next_newline;
   void * base;
 
@@ -563,12 +563,12 @@ frida_try_infer_rtld_flavor_from_maps_line (void * data, size_t size, void * use
 
   *next_newline = '\0';
 
-  base = (void *) frida_parse_size (line);
+  base = (void *) telco_parse_size (line);
 
   if (base == ctx->interpreter)
   {
     const char * filename = strrchr (line, '/') + 1;
-    ctx->flavor = frida_infer_rtld_flavor_from_filename (filename);
+    ctx->flavor = telco_infer_rtld_flavor_from_filename (filename);
     return -1;
   }
 
@@ -576,15 +576,15 @@ frida_try_infer_rtld_flavor_from_maps_line (void * data, size_t size, void * use
 }
 
 static bool
-frida_path_is_libc (const char * path, FridaRtldFlavor rtld_flavor)
+telco_path_is_libc (const char * path, TelcoRtldFlavor rtld_flavor)
 {
   const char * last_slash, * name;
 
-  if (rtld_flavor == FRIDA_RTLD_ANDROID)
+  if (rtld_flavor == TELCO_RTLD_ANDROID)
   {
-    return frida_str_has_suffix (path, "/lib/libc.so") ||
-        frida_str_has_suffix (path, "/lib64/libc.so") ||
-        frida_str_has_suffix (path, "/bionic/libc.so");
+    return telco_str_has_suffix (path, "/lib/libc.so") ||
+        telco_str_has_suffix (path, "/lib64/libc.so") ||
+        telco_str_has_suffix (path, "/bionic/libc.so");
   }
 
   last_slash = strrchr (path, '/');
@@ -593,14 +593,14 @@ frida_path_is_libc (const char * path, FridaRtldFlavor rtld_flavor)
   else
     name = path;
 
-  return frida_str_has_prefix (name, "libc.so");
+  return telco_str_has_prefix (name, "libc.so");
 }
 
 static ssize_t
-frida_parse_auxv_entry (void * data, size_t size, void * user_data)
+telco_parse_auxv_entry (void * data, size_t size, void * user_data)
 {
   ElfW(auxv_t) * entry = data;
-  FridaProcessLayout * layout = user_data;
+  TelcoProcessLayout * layout = user_data;
 
   if (size < sizeof (ElfW(auxv_t)))
     return 0;
@@ -625,9 +625,9 @@ frida_parse_auxv_entry (void * data, size_t size, void * user_data)
 }
 
 static bool
-frida_collect_interpreter_symbol (const FridaElfExportDetails * details, void * user_data)
+telco_collect_interpreter_symbol (const TelcoElfExportDetails * details, void * user_data)
 {
-  FridaProcessLayout * layout = user_data;
+  TelcoProcessLayout * layout = user_data;
   bool found_both;
 
   if (details->type == STT_OBJECT && (
@@ -645,10 +645,10 @@ frida_collect_interpreter_symbol (const FridaElfExportDetails * details, void * 
 }
 
 static ssize_t
-frida_try_find_libc_from_maps_line (void * data, size_t size, void * user_data)
+telco_try_find_libc_from_maps_line (void * data, size_t size, void * user_data)
 {
   char * line = data;
-  FridaProcessLayout * layout = user_data;
+  TelcoProcessLayout * layout = user_data;
   char * next_newline, * path;
 
   next_newline = strchr (line, '\n');
@@ -658,9 +658,9 @@ frida_try_find_libc_from_maps_line (void * data, size_t size, void * user_data)
   *next_newline = '\0';
 
   path = strchr (line, '/');
-  if (path != NULL && frida_path_is_libc (path, layout->rtld_flavor))
+  if (path != NULL && telco_path_is_libc (path, layout->rtld_flavor))
   {
-    layout->libc = (void *) frida_parse_size (line);
+    layout->libc = (void *) telco_parse_size (line);
     return -1;
   }
 
@@ -668,7 +668,7 @@ frida_try_find_libc_from_maps_line (void * data, size_t size, void * user_data)
 }
 
 static void
-frida_try_load_libc_and_raise (FridaBootstrapContext * ctx)
+telco_try_load_libc_and_raise (TelcoBootstrapContext * ctx)
 {
   void * ld, * entrypoint, * program;
   uint8_t dummy_random[16] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10 };
@@ -765,7 +765,7 @@ frida_try_load_libc_and_raise (FridaBootstrapContext * ctx)
   phdr[0].p_memsz = sizeof (phdr);
 
   entrypoint = NULL;
-  ld = frida_map_elf (ctx, ld_name, &entrypoint);
+  ld = telco_map_elf (ctx, ld_name, &entrypoint);
   if (ld == NULL)
     return;
 
@@ -777,7 +777,7 @@ frida_try_load_libc_and_raise (FridaBootstrapContext * ctx)
   memmove (program + dyn_offset, dyn, dyn_size);
 
   {
-    alignas (16) FridaEntrypointParameters params = {
+    alignas (16) TelcoEntrypointParameters params = {
       .argc = 1,
       .argv = {
         "/bin/program",
@@ -792,7 +792,7 @@ frida_try_load_libc_and_raise (FridaBootstrapContext * ctx)
         { .a_type = AT_PHENT, .a_un.a_val = sizeof (ElfW(Phdr)) },
         { .a_type = AT_PHNUM, .a_un.a_val = sizeof (phdr) / sizeof (phdr[0]) },
         { .a_type = AT_BASE, .a_un.a_val = (size_t) ld },
-        { .a_type = AT_ENTRY, .a_un.a_val = (size_t) frida_libc_main },
+        { .a_type = AT_ENTRY, .a_un.a_val = (size_t) telco_libc_main },
         { .a_type = AT_RANDOM, .a_un.a_val = (ElfW(Addr)) dummy_random },
         { .a_type = AT_EXECFN, .a_un.a_val = (ElfW(Addr)) "/bin/program" },
         { .a_type = AT_NULL, .a_un.a_val = 0 },
@@ -849,14 +849,14 @@ frida_try_load_libc_and_raise (FridaBootstrapContext * ctx)
 }
 
 static int
-frida_libc_main (int argc, char * argv[])
+telco_libc_main (int argc, char * argv[])
 {
   raise (SIGSTOP);
   return 0;
 }
 
 static void *
-frida_map_elf (FridaBootstrapContext * ctx, const char * path, void ** entrypoint)
+telco_map_elf (TelcoBootstrapContext * ctx, const char * path, void ** entrypoint)
 {
   bool success = false;
   int fd = -1;
@@ -894,7 +894,7 @@ frida_map_elf (FridaBootstrapContext * ctx, const char * path, void ** entrypoin
 
     if (phdr->p_type == PT_LOAD)
     {
-      lowest = MIN (FRIDA_ELF_PAGE_START (phdr->p_vaddr, page_size), lowest);
+      lowest = MIN (TELCO_ELF_PAGE_START (phdr->p_vaddr, page_size), lowest);
       highest = MAX (phdr->p_vaddr + phdr->p_memsz, highest);
     }
   }
@@ -925,7 +925,7 @@ frida_map_elf (FridaBootstrapContext * ctx, const char * path, void ** entrypoin
 
       relative_vaddr = phdr->p_vaddr - lowest;
 
-      map_address = FRIDA_ELF_PAGE_START (base + relative_vaddr, page_size);
+      map_address = TELCO_ELF_PAGE_START (base + relative_vaddr, page_size);
 
       gap_size = (previous_end != NULL)
           ? (void *) map_address - previous_end
@@ -933,9 +933,9 @@ frida_map_elf (FridaBootstrapContext * ctx, const char * path, void ** entrypoin
       if (gap_size != 0)
         munmap (previous_end, gap_size);
 
-      page_offset = FRIDA_ELF_PAGE_OFFSET (relative_vaddr, page_size);
+      page_offset = TELCO_ELF_PAGE_OFFSET (relative_vaddr, page_size);
       map_offset = phdr->p_offset - page_offset;
-      map_size = FRIDA_ELF_PAGE_ALIGN (phdr->p_filesz + page_offset, page_size);
+      map_size = TELCO_ELF_PAGE_ALIGN (phdr->p_filesz + page_offset, page_size);
 
       prot = 0;
       if ((flags & PF_R) != 0)
@@ -956,7 +956,7 @@ frida_map_elf (FridaBootstrapContext * ctx, const char * path, void ** entrypoin
     }
   }
 
-  n = FRIDA_ELF_PAGE_OFFSET (bss_start, page_size);
+  n = TELCO_ELF_PAGE_OFFSET (bss_start, page_size);
   if (n != 0)
   {
     n = page_size - n;
@@ -979,7 +979,7 @@ beach:
 }
 
 static void
-frida_parse_file (const char * path, FridaParseFunc parse, void * user_data)
+telco_parse_file (const char * path, TelcoParseFunc parse, void * user_data)
 {
   int fd;
   char * cursor;
@@ -1035,7 +1035,7 @@ beach:
 }
 
 static size_t
-frida_parse_size (const char * str)
+telco_parse_size (const char * str)
 {
   size_t result = 0;
   const char * cursor;
@@ -1056,13 +1056,13 @@ frida_parse_size (const char * str)
 }
 
 static bool
-frida_str_has_prefix (const char * str, const char * prefix)
+telco_str_has_prefix (const char * str, const char * prefix)
 {
   return strncmp (str, prefix, strlen (prefix)) == 0;
 }
 
 static bool
-frida_str_has_suffix (const char * str, const char * suffix)
+telco_str_has_suffix (const char * str, const char * suffix)
 {
   size_t str_length, suffix_length;
 
@@ -1075,7 +1075,7 @@ frida_str_has_suffix (const char * str, const char * suffix)
 }
 
 static int
-frida_socketpair (int domain, int type, int protocol, int sv[2])
+telco_socketpair (int domain, int type, int protocol, int sv[2])
 {
 #ifdef NOLIBC
   return my_syscall4 (__NR_socketpair, domain, type, protocol, sv);
@@ -1085,7 +1085,7 @@ frida_socketpair (int domain, int type, int protocol, int sv[2])
 }
 
 static int
-frida_prctl (int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5)
+telco_prctl (int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5)
 {
 #ifdef NOLIBC
   return my_syscall5 (__NR_prctl, option, arg2, arg3, arg4, arg5);
@@ -1102,8 +1102,8 @@ frida_prctl (int option, unsigned long arg2, unsigned long arg3, unsigned long a
 int
 main (void)
 {
-  FridaLibcApi libc;
-  FridaBootstrapContext ctx;
+  TelcoLibcApi libc;
+  TelcoBootstrapContext ctx;
   size_t result;
 
   bzero (&libc, sizeof (libc));
@@ -1114,7 +1114,7 @@ main (void)
   ctx.enable_ctrlfds = true;
   ctx.libc = &libc;
 
-  result = frida_bootstrap (&ctx);
+  result = telco_bootstrap (&ctx);
 
   printf ("result: %zu\n", result);
   printf ("loader_base: %p\n", ctx.loader_base);

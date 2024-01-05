@@ -1,5 +1,5 @@
-[CCode (gir_namespace = "FridaJDWP", gir_version = "1.0")]
-namespace Frida.JDWP {
+[CCode (gir_namespace = "TelcoJDWP", gir_version = "1.0")]
+namespace Telco.JDWP {
 	public class Client : GLib.Object, AsyncInitable {
 		public signal void closed ();
 		public signal void events_received (Events events);
@@ -811,7 +811,7 @@ namespace Frida.JDWP {
 		ERROR       = (1 << 3);
 
 		public string to_short_string () {
-			return this.to_string ().replace ("FRIDA_JDWP_CLASS_STATUS_", "");
+			return this.to_string ().replace ("TELCO_JDWP_CLASS_STATUS_", "");
 		}
 	}
 

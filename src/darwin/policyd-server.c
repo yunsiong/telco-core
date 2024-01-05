@@ -5,9 +5,9 @@
  * OPTIONS: 
  */
 
-/* Module frida_policyd */
+/* Module telco_policyd */
 
-#define	__MIG_check__Request__frida_policyd_subsystem__ 1
+#define	__MIG_check__Request__telco_policyd_subsystem__ 1
 
 #include "policyd-server.h"
 
@@ -91,19 +91,19 @@
 /* Forward Declarations */
 
 
-mig_internal novalue _Xfrida_policyd_soften
+mig_internal novalue _Xtelco_policyd_soften
 	(mach_msg_header_t *InHeadP, mach_msg_header_t *OutHeadP);
 
 
 #if ( __MigTypeCheck )
-#if __MIG_check__Request__frida_policyd_subsystem__
-#if !defined(__MIG_check__Request__frida_policyd_soften_t__defined)
-#define __MIG_check__Request__frida_policyd_soften_t__defined
+#if __MIG_check__Request__telco_policyd_subsystem__
+#if !defined(__MIG_check__Request__telco_policyd_soften_t__defined)
+#define __MIG_check__Request__telco_policyd_soften_t__defined
 
-mig_internal kern_return_t __MIG_check__Request__frida_policyd_soften_t(__attribute__((__unused__)) __Request__frida_policyd_soften_t *In0P)
+mig_internal kern_return_t __MIG_check__Request__telco_policyd_soften_t(__attribute__((__unused__)) __Request__telco_policyd_soften_t *In0P)
 {
 
-	typedef __Request__frida_policyd_soften_t __Request;
+	typedef __Request__telco_policyd_soften_t __Request;
 #if	__MigTypeCheck
 	if ((In0P->Head.msgh_bits & MACH_MSGH_BITS_COMPLEX) ||
 	    (In0P->Head.msgh_size != (mach_msg_size_t)sizeof(__Request)))
@@ -112,13 +112,13 @@ mig_internal kern_return_t __MIG_check__Request__frida_policyd_soften_t(__attrib
 
 	return MACH_MSG_SUCCESS;
 }
-#endif /* !defined(__MIG_check__Request__frida_policyd_soften_t__defined) */
-#endif /* __MIG_check__Request__frida_policyd_subsystem__ */
+#endif /* !defined(__MIG_check__Request__telco_policyd_soften_t__defined) */
+#endif /* __MIG_check__Request__telco_policyd_subsystem__ */
 #endif /* ( __MigTypeCheck ) */
 
 
-/* Routine frida_policyd_soften */
-mig_internal novalue _Xfrida_policyd_soften
+/* Routine telco_policyd_soften */
+mig_internal novalue _Xtelco_policyd_soften
 	(mach_msg_header_t *InHeadP, mach_msg_header_t *OutHeadP)
 {
 
@@ -134,8 +134,8 @@ mig_internal novalue _Xfrida_policyd_soften
 #ifdef  __MigPackStructs
 #pragma pack(pop)
 #endif
-	typedef __Request__frida_policyd_soften_t __Request;
-	typedef __Reply__frida_policyd_soften_t Reply __attribute__((unused));
+	typedef __Request__telco_policyd_soften_t __Request;
+	typedef __Reply__telco_policyd_soften_t Reply __attribute__((unused));
 
 	/*
 	 * typedef struct {
@@ -147,20 +147,20 @@ mig_internal novalue _Xfrida_policyd_soften
 
 	Request *In0P = (Request *) InHeadP;
 	Reply *OutP = (Reply *) OutHeadP;
-#ifdef	__MIG_check__Request__frida_policyd_soften_t__defined
+#ifdef	__MIG_check__Request__telco_policyd_soften_t__defined
 	kern_return_t check_result;
-#endif	/* __MIG_check__Request__frida_policyd_soften_t__defined */
+#endif	/* __MIG_check__Request__telco_policyd_soften_t__defined */
 
-	__DeclareRcvRpc(31337, "frida_policyd_soften")
-	__BeforeRcvRpc(31337, "frida_policyd_soften")
+	__DeclareRcvRpc(31337, "telco_policyd_soften")
+	__BeforeRcvRpc(31337, "telco_policyd_soften")
 
-#if	defined(__MIG_check__Request__frida_policyd_soften_t__defined)
-	check_result = __MIG_check__Request__frida_policyd_soften_t((__Request *)In0P);
+#if	defined(__MIG_check__Request__telco_policyd_soften_t__defined)
+	check_result = __MIG_check__Request__telco_policyd_soften_t((__Request *)In0P);
 	if (check_result != MACH_MSG_SUCCESS)
 		{ MIG_RETURN_ERROR(OutP, check_result); }
-#endif	/* defined(__MIG_check__Request__frida_policyd_soften_t__defined) */
+#endif	/* defined(__MIG_check__Request__telco_policyd_soften_t__defined) */
 
-	OutP->RetCode = frida_policyd_soften(In0P->Head.msgh_request_port, In0P->pid, &OutP->error_code);
+	OutP->RetCode = telco_policyd_soften(In0P->Head.msgh_request_port, In0P->pid, &OutP->error_code);
 	if (OutP->RetCode != KERN_SUCCESS) {
 		MIG_RETURN_ERROR(OutP, OutP->RetCode);
 	}
@@ -169,25 +169,25 @@ mig_internal novalue _Xfrida_policyd_soften
 
 
 	OutP->Head.msgh_size = (mach_msg_size_t)(sizeof(Reply));
-	__AfterRcvRpc(31337, "frida_policyd_soften")
+	__AfterRcvRpc(31337, "telco_policyd_soften")
 }
 
 
 
 /* Description of this subsystem, for use in direct RPC */
-const struct frida_policyd_subsystem frida_policyd_subsystem = {
-	frida_policyd_server_routine,
+const struct telco_policyd_subsystem telco_policyd_subsystem = {
+	telco_policyd_server_routine,
 	31337,
 	31338,
-	(mach_msg_size_t)sizeof(union __ReplyUnion__frida_policyd_subsystem),
+	(mach_msg_size_t)sizeof(union __ReplyUnion__telco_policyd_subsystem),
 	(vm_address_t)0,
 	{
           { (mig_impl_routine_t) 0,
-          (mig_stub_routine_t) _Xfrida_policyd_soften, 3, 0, (routine_arg_descriptor_t)0, (mach_msg_size_t)sizeof(__Reply__frida_policyd_soften_t)},
+          (mig_stub_routine_t) _Xtelco_policyd_soften, 3, 0, (routine_arg_descriptor_t)0, (mach_msg_size_t)sizeof(__Reply__telco_policyd_soften_t)},
 	}
 };
 
-mig_external boolean_t frida_policyd_server
+mig_external boolean_t telco_policyd_server
 	(mach_msg_header_t *InHeadP, mach_msg_header_t *OutHeadP)
 {
 	/*
@@ -209,7 +209,7 @@ mig_external boolean_t frida_policyd_server
 	OutHeadP->msgh_reserved = 0;
 
 	if ((InHeadP->msgh_id > 31337) || (InHeadP->msgh_id < 31337) ||
-	    ((routine = frida_policyd_subsystem.routine[InHeadP->msgh_id - 31337].stub_routine) == 0)) {
+	    ((routine = telco_policyd_subsystem.routine[InHeadP->msgh_id - 31337].stub_routine) == 0)) {
 		((mig_reply_error_t *)OutHeadP)->NDR = NDR_record;
 		((mig_reply_error_t *)OutHeadP)->RetCode = MIG_BAD_ID;
 		return FALSE;
@@ -218,7 +218,7 @@ mig_external boolean_t frida_policyd_server
 	return TRUE;
 }
 
-mig_external mig_routine_t frida_policyd_server_routine
+mig_external mig_routine_t telco_policyd_server_routine
 	(mach_msg_header_t *InHeadP)
 {
 	int msgh_id;
@@ -228,5 +228,5 @@ mig_external mig_routine_t frida_policyd_server_routine
 	if ((msgh_id > 0) || (msgh_id < 0))
 		return 0;
 
-	return frida_policyd_subsystem.routine[msgh_id].stub_routine;
+	return telco_policyd_subsystem.routine[msgh_id].stub_routine;
 }

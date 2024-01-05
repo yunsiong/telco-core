@@ -5,7 +5,7 @@ const {
   agentFiles,
   _build,
   _queryDefaultAssets,
-} = FridaCompilerAgentCore;
+} = TelcoCompilerAgentCore;
 
 const projectRoot = '/agent';
 const projectNodeModules = '/agent/node_modules';
@@ -204,7 +204,7 @@ class StubSystem {
       if (subPath.startsWith('/node_modules')) {
         return subPath;
       }
-      return '/node_modules/frida-compile' + subPath;
+      return '/node_modules/telco-compile' + subPath;
     }
 
     if (path.startsWith(projectNodeModules)) {

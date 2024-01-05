@@ -1,4 +1,4 @@
-namespace Frida {
+namespace Telco {
 	public class Promise<T> {
 		private Impl<T> impl;
 
@@ -48,7 +48,7 @@ namespace Frida {
 
 			private Gee.ArrayQueue<CompletionFuncEntry> on_complete;
 
-			public async T wait_async (Cancellable? cancellable) throws Frida.Error, IOError {
+			public async T wait_async (Cancellable? cancellable) throws Telco.Error, IOError {
 				if (_ready)
 					return get_result ();
 
@@ -74,15 +74,15 @@ namespace Frida {
 				return get_result ();
 			}
 
-			private T get_result () throws Frida.Error, IOError {
+			private T get_result () throws Telco.Error, IOError {
 				if (error != null) {
-					if (error is Frida.Error)
-						throw (Frida.Error) error;
+					if (error is Telco.Error)
+						throw (Telco.Error) error;
 
 					if (error is IOError.CANCELLED)
 						throw (IOError) error;
 
-					throw new Frida.Error.TRANSPORT ("%s", error.message);
+					throw new Telco.Error.TRANSPORT ("%s", error.message);
 				}
 
 				return _value;
@@ -104,7 +104,7 @@ namespace Frida {
 
 			internal void abandon () {
 				if (!_ready) {
-					reject (new Frida.Error.INVALID_OPERATION ("Promise abandoned"));
+					reject (new Telco.Error.INVALID_OPERATION ("Promise abandoned"));
 				}
 			}
 
@@ -139,6 +139,6 @@ namespace Frida {
 		public abstract bool ready { get; }
 		public abstract T? value { get; }
 		public abstract GLib.Error? error { get; }
-		public abstract async T wait_async (Cancellable? cancellable) throws Frida.Error, IOError;
+		public abstract async T wait_async (Cancellable? cancellable) throws Telco.Error, IOError;
 	}
 }
