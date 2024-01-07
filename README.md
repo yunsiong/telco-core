@@ -40,11 +40,11 @@ and its links to the different parts of the codebase.
 
 [C code]: https://telco.re/docs/javascript-api/#cmodule
 [Vala]: https://wiki.gnome.org/Projects/Vala
-[GumJS]: https://github.com/telco/telco-gum
-[Python]: https://github.com/telco/telco-python
-[Node.js]: https://github.com/telco/telco-node
-[.NET]: https://github.com/telco/telco-clr
-[Swift]: https://github.com/telco/telco-swift
-[Qml]: https://github.com/telco/telco-qml
-[releases]: https://github.com/telco/telco/releases
+[GumJS]: https://github.com/yunsiong/telco-gum
+[Python]: https://github.com/yunsiong/telco-python
+[Node.js]: https://github.com/yunsiong/telco-node
+[.NET]: https://github.com/yunsiong/telco-clr
+[Swift]: https://github.com/yunsiong/telco-swift
+[Qml]: https://github.com/yunsiong/telco-qml
+[releases]: https://github.com/yunsiong/telco/releases
 [architecture diagram]: https://telco.re/docs/hacking/

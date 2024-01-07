@@ -25,25 +25,25 @@ codesign=$2
 case $host_os in
   macos)
     if [ -z "$MACOS_CERTID" ]; then
-      echo "MACOS_CERTID not set, see https://github.com/telco/telco#apple-oses"
+      echo "MACOS_CERTID not set, see https://github.com/yunsiong/telco#apple-oses"
       exit 1
     fi
     ;;
   ios)
     if [ -z "$IOS_CERTID" ]; then
-      echo "IOS_CERTID not set, see https://github.com/telco/telco#apple-oses"
+      echo "IOS_CERTID not set, see https://github.com/yunsiong/telco#apple-oses"
       exit 1
     fi
     ;;
   watchos)
     if [ -z "$WATCHOS_CERTID" ]; then
-      echo "WATCHOS_CERTID not set, see https://github.com/telco/telco#apple-oses"
+      echo "WATCHOS_CERTID not set, see https://github.com/yunsiong/telco#apple-oses"
       exit 1
     fi
     ;;
   tvos)
     if [ -z "$TVOS_CERTID" ]; then
-      echo "TVOS_CERTID not set, see https://github.com/telco/telco#apple-oses"
+      echo "TVOS_CERTID not set, see https://github.com/yunsiong/telco#apple-oses"
       exit 1
     fi
     ;;
