@@ -1,4 +1,4 @@
-import * as crosspath from "@telco/crosspath";
+import * as crosspath from "@frida/crosspath";
 import type * as backend from "telco-compile";
 import {
     makeDefaultCompilerOptions,
@@ -7,7 +7,7 @@ import {
     queryDefaultAssets as _queryDefaultAssets,
 } from "telco-compile";
 import ts from "telco-compile/ext/typescript.js";
-import telcoFs from "telco-fs";
+import telcoFs from "frida-fs";
 import fs from "fs";
 
 const { DiagnosticCategory, FileWatcherEventKind } = ts;

@@ -10,7 +10,7 @@ else
 endif
 compiler_mksnapshot = use_snapshot ? v8_mksnapshot : ''
 
-compiler_agent = custom_target('telco-compiler-agent',
+compiler_agent = custom_target('frida-compiler-agent',
   input: [
     'agent-entrypoint.js',
     'agent-core.ts',

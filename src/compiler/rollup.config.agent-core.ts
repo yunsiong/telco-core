@@ -1,10 +1,10 @@
-import crosspath from "@telco/crosspath";
+import crosspath from "@frida/crosspath";
 import fs from "fs";
 import { sync as glob } from "glob";
 import replace from "@rollup/plugin-replace";
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
-import polyfills from "@telco/rollup-plugin-node-polyfills";
+import polyfills from "@frida/rollup-plugin-node-polyfills";
 import { terser } from "rollup-plugin-terser";
 import { defineConfig } from "rollup";
 import type rollup from "rollup";
@@ -79,31 +79,31 @@ function computeSubstitutionValues() {
     const assetModulesDir = crosspath.join(assetParentDir, "node_modules");
 
     const shimDirs = [
-        ["@telco", "assert"],
-        ["@telco", "base64-js"],
-        ["@telco", "buffer"],
-        ["@telco", "crypto"],
-        ["@telco", "diagnostics_channel"],
-        ["@telco", "events"],
-        ["@telco", "http"],
-        ["@telco", "http-parser-js"],
-        ["@telco", "https"],
-        ["@telco", "ieee754"],
-        ["@telco", "net"],
-        ["@telco", "os"],
-        ["@telco", "path"],
-        ["@telco", "process"],
-        ["@telco", "punycode"],
-        ["@telco", "querystring"],
-        ["@telco", "readable-stream"],
-        ["@telco", "stream"],
-        ["@telco", "string_decoder"],
-        ["@telco", "timers"],
-        ["@telco", "tty"],
-        ["@telco", "url"],
-        ["@telco", "util"],
-        ["@telco", "vm"],
-        ["telco-fs"],
+        ["@frida", "assert"],
+        ["@frida", "base64-js"],
+        ["@frida", "buffer"],
+        ["@frida", "crypto"],
+        ["@frida", "diagnostics_channel"],
+        ["@frida", "events"],
+        ["@frida", "http"],
+        ["@frida", "http-parser-js"],
+        ["@frida", "https"],
+        ["@frida", "ieee754"],
+        ["@frida", "net"],
+        ["@frida", "os"],
+        ["@frida", "path"],
+        ["@frida", "process"],
+        ["@frida", "punycode"],
+        ["@frida", "querystring"],
+        ["@frida", "readable-stream"],
+        ["@frida", "stream"],
+        ["@frida", "string_decoder"],
+        ["@frida", "timers"],
+        ["@frida", "tty"],
+        ["@frida", "url"],
+        ["@frida", "util"],
+        ["@frida", "vm"],
+        ["frida-fs"],
     ];
     const typeDirs = [
         ["@types", "node"],
@@ -123,7 +123,7 @@ function computeSubstitutionValues() {
     assets.push(...glob(crosspath.join(compilerDir, "ext", "lib.decorators*.d.ts")));
 
     const ignoredAssetFiles = new Set([
-        "@telco/process/browser.js",
+        "@frida/process/browser.js",
     ]);
 
     const agentDirectories = new Set<string>();
